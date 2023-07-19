@@ -1,0 +1,154 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+    ViewData["HomeStyle"] = "fondo-body-home";
+    var valores = await _valores_manager.ObtenerTodosAsync();
+    var variables = await _variables_manager.ObtenerTodosAsync();
+    var gdis = await _gdi_manager.ObtenerTodosAsync();
+}
+@inject Villafane.Services.DB.ValoresBusinessManager _valores_manager;
+@inject Villafane.Services.DB.VariablesBusinessManager _variables_manager;
+@inject Villafane.Services.DB.GrupoDeInteresBusinessManager _gdi_manager;
+<div class="text-center">
+
+    <!-- HTML Markup for Bootstrap Carousel -->
+    <div id="myCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="0" class="active"></button>
+            <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="1"></button>
+            <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="2"></button>
+            <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="3"></button>
+            <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="4"></button>
+        </div>
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <video class="d-block w-100" loop autoplay muted id="bg-video">
+                    <source src="/video/fondo.mp4" type="video/mp4">
+                </video>
+                <div class="slide1">
+                <div class="carousel-caption">
+                    <h1>V&A - CMR</h1>
+                    <p class="p-slider">Desde aquí podrás gestionar los valores que se van a mostrar en el reporte, contando con Indicadores, Valores, Variables y Grupos de Interés</p>
+                        <div class="row m-3">
+                            
+                            
+                            <div class="col-md-3 offset-md-3">
+                                <a class="btn btn-primary btn-principal btn-lg" asp-action="Index" asp-controller="Valores">Valores</a>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <a class="btn btn-primary btn-principal btn-lg" asp-action="Index" asp-controller="Variables">Variables</a>
+                            </div>
+                        </div>
+                        <div class="row m-3">
+                            <div class="col-md-3 offset-md-3">
+                                <a class="btn btn-primary btn-principal btn-lg" asp-action="Index" asp-controller="Indicadores">Indicadores</a>
+                            </div>
+                            <div class="col-md-3">
+                                <a class="btn btn-primary btn-principal btn-lg" asp-action="Index" asp-controller="GruposDeInteres">Grupos de Interes</a>
+                            </div>
+                        </div>
+                </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="slide2">
+                <div class="carousel-caption">
+                    <h1>Valores</h1>
+                    <a class="btn btn-primary btn-principal btn-lg" asp-action="Index" asp-controller="Valores">Acceo a Valores</a>
+                    <a class="btn btn-primary btn-principal btn-lg" asp-action="PesosValoresTeoricos" asp-controller="Valores">Pesos Valores</a>
+                    <div class="row">
+                        <div class="offset-md-3 col-md-6">
+                             <div class="row">
+                            @foreach(var item in valores)
+                            {
+                                <div class="col-md-6 text-center">
+                                <div style="width: 250px; background-color: darkgrey;color:white; padding:10PX; margin-left:auto;margin-right:auto; margin-top:10px;margin-bottom:10px">@item.Valor</div>
+                                </div>
+                            }
+                        </div>
+                        </div>
+                    </div>
+                   
+                </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="slide3">
+                    <div class="carousel-caption taller">
+                        <h1>Variables</h1>
+                        <a class="btn btn-primary btn-principal btn-lg" asp-action="Index" asp-controller="Variables">Acceso a Variables</a>
+                        <a class="btn btn-primary btn-principal btn-lg" asp-action="PesosVariablesTeoricos" asp-controller="Variables">Pesos Variables</a>
+                        <div class="row">
+                            <div class=" col-md-12">
+                                <div class="row">
+                                    <div class="col-md-6 offset-md-3">
+                                        <div style=" color:white; padding:10PX; margin:10px;text-align:center;">
+                                            @for (int i = 0; i<variables.Count; i++)
+                                            {
+
+
+                                                <span class="badge bg-secondary " style="margin:5px;">@variables[i].Variable1</span>
+                                    }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="slide4">
+                    <div class="carousel-caption taller">
+                        <h1>Grupos de Interés</h1>
+                        <a class="btn btn-primary  btn-lg" asp-action="Index" asp-controller="GruposDeInteres">Acceo a Grupos de Interés</a>
+                        <div class="row">
+                            <div class="offset-md-2 col-md-8">
+                                <div class="row">
+                                    @foreach (var item in gdis)
+                                    {
+                                        <div class="col-md-4 text-center">
+                                            <div style="height:68px;width: 250px;  position: relative;background-color: darkgrey;color:white; margin-left:auto;margin-right:auto; margin-top:10px;margin-bottom:10px">
+                                                <p style="  margin: 0; position: absolute;top: 50%;  left: 50%; transform: translate(-50%, -50%);">@item.Grupo.ToUpper()</p>
+                                                </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="slide5">
+                    <div class="carousel-caption">
+                        <h1>Indicadores</h1>
+                        <p class="p-slider">Gestiona todos los Indicadores que componen este proyecto con sus fuentes, relaciones y notas.</p>
+                      
+                                <a class="btn btn-primary btn-principal btn-lg" asp-action="Index" asp-controller="Indicadores">Acceso a Indicadores</a>
+                           
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#myCarousel" role="button" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#myCarousel" role="button" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Siguiente</span>
+        </button>
+
+    </div>
+   
+
+</div>
+@section Scripts{
+    <script>
+ 
+ 
+</script>
+}

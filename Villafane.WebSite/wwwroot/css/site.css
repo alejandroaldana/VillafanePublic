@@ -1,0 +1,112 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+th, td {
+    border: 1px solid black;
+}
+table {
+    border-collapse: collapse;
+    border: 1px solid black;
+   
+    vertical-align: middle;
+}
+thead {
+    background-color: #333;
+    color: white;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 2%;
+}
+tbody th {
+    background-color: #36c !important;
+    color: #fff;
+    text-align: left;
+    font-size:15px;
+}
+
+.modal:nth-of-type(even) {
+    z-index: 1052 !important;
+}
+
+.modal-backdrop.show:nth-of-type(even) {
+    z-index: 1051 !important;
+}
+
+.slide1 {
+    background-image: radial-gradient(rgba(0,0,0, 0.6), rgba(0,0,0, 0.6));
+    background-size:cover;
+    height:800px;
+}
+.slide2 {
+    background-image: radial-gradient(rgba(0,0,0, 0.6), rgba(0,0,0, 0.6)), url('/../img/fondo-villafane2.jpg');
+    background-size:cover;
+    height: 800px;
+}
+.slide3 {
+    background-image: radial-gradient(rgba(0,0,0, 0.6), rgba(0,0,0, 0.6)), url('/../img/fondo-villafane3.jpg');
+    background-size: cover;
+    height: 800px;
+}
+.slide4{
+    background-image: radial-gradient(rgba(0,0,0, 0.6), rgba(0,0,0, 0.6)), url('/../img/fondo-villafane4.jpg');
+    background-size: cover;
+    height: 800px;
+}
+.slide5{
+    background-image: radial-gradient(rgba(0,0,0, 0.6), rgba(0,0,0, 0.6)), url('/../img/fondo-villafane5.jpg');
+    background-size: cover;
+    height: 800px;
+}
+.carousel{
+    top:-16px;
+}
+.carousel-caption {
+    position: absolute;
+    width:80%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.carousel-item video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-width: 100%;
+    min-height: 100%;
+    z-index:-1;
+}
+.taller{
+    top:40%;
+}
+.btn-principal{
+    width: 250px;
+    padding:10px;
+    border-radius:0;
+}
+
+h1{
+    font-size:70px;
+}
+.p-slider{
+    font-size:25px;
+}
+
+.vertical-center {
+    margin: 0;
+   
+}

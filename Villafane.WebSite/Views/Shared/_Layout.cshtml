@@ -1,0 +1,153 @@
+﻿@using Villafane.Services.DB;
+@inject ConfigurationBusinessManager _conf_manager;
+@{
+    var config = await _conf_manager.ObtenerConfiguracionAsync();
+
+    //Valores Por defecto
+    if (config == null)
+    {
+        config = new Configuracion()
+                {
+                    ColorBarra = "#61615f",
+                    ColorPrincipal = "green",
+                    ColorCabecerasTablas = "#333",
+                    ColorCabeceraTablasVertical = "#36c"
+                };
+    }
+
+    var periodoDeFecto = "";
+    var listaPeriodos = await _conf_manager.ObtenerPeriodos();
+    if(listaPeriodos != null && listaPeriodos.Count > 0)
+    {
+        periodoDeFecto = listaPeriodos.First();
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CMR</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Villafane.WebSite.styles.css" asp-append-version="true" />
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Montserrat">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css" asp-append-version="true" />
+    <style>
+        
+        body {
+            font-family: 'Montserrat', serif;
+        }
+    </style>
+    <style>
+        /*    .fondo-body-home {
+                    background-image:radial-gradient(rgba(41, 133, 23, 0.7), rgba(41, 133, 27, 0.7)), url('/../img/fondo-villafane.jpg');
+                    background-size:cover;
+                }*/
+
+        .navbar {
+            background-color: @config.ColorBarra;
+        }
+
+        .btn-principal,.btn-primary {
+            background-color: @config.ColorPrincipal;
+            border-color: @config.ColorPrincipal;
+        }
+
+            .btn-principal:hover, .btn-primary:hover {
+                background-color: @config.ColorPrincipal;
+                border-color: @config.ColorPrincipal;
+            }
+            thead{
+            background-color: @config.ColorCabecerasTablas;
+            }
+
+        tbody th {
+            background-color: @config.ColorCabeceraTablasVertical !important;
+           
+        }
+    </style>
+</head>
+<body class="@ViewData["HomeStyle"]">
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light   box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index"><img src="/img/Lgo.png" style="max-width:100%; max-height:50px;" /></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Indicadores
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" asp-controller="Indicadores" asp-action="Index" asp-route-periodo="@periodoDeFecto">Indicadores</a></li>
+                                @if (User.IsInRole("Admin") || User.IsInRole("Gestor"))
+                                {
+                                    <li><a class="dropdown-item" asp-controller="Indicadores" asp-action="ImportarExcelIndicadores">Importar datos</a></li>
+                                }
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="GruposDeInteres" asp-action="Index">Grupos de Interés</a>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Valores
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" asp-controller="Valores" asp-action="Index">Valores</a></li>
+                                <li><a class="dropdown-item" asp-controller="Valores" asp-action="PesosValoresTeoricos" asp-route-periodo="@periodoDeFecto">Pesos Valores Teóricos</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Variables
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" asp-controller="Variables" asp-action="Index">Variables</a></li>
+                                <li><a class="dropdown-item" asp-controller="Variables" asp-action="PesosVariablesTeoricos" asp-route-periodo="@periodoDeFecto">Pesos Variables Teóricos</a></li>
+                                <li><a class="dropdown-item" asp-controller="Variables" asp-action="CargarPesosVariables">Importar Pesos Masivamente</a></li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                    <partial name="_LoginPartial" />
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class=" footer text-muted">
+        <div class="container">
+            &copy; @DateTime.Now.Year - Villafañe - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="//cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready( function () {
+            $(".datatable").DataTable();
+        });
+
+        
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

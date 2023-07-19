@@ -1,0 +1,110 @@
+﻿@model List<GruposDeIntere>
+@{
+}
+<h2>Grupos de Interés</h2>
+@if(User.IsInRole("Admin") || User.IsInRole("Gestor"))
+{
+    <button class="btn btn-primary  m-3" id="btnAgregarGrupo">Agregar Grupo de Interés</button>
+}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Grupo de Interés</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var grupo in Model)
+            {
+                <tr>
+                    <td>@grupo.Grupo</td>
+                    <td>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Gestor"))
+                        {
+                        <button class="btn btn-warning modificarGrupo" data-id="@grupo.Id" data-grupo="@grupo.Grupo">Modificar</button>
+                        <button class="btn btn-danger eliminarGrupo" data-id="@grupo.Id" data-grupo="@grupo.Grupo">Eliminar</button>
+                        }   
+                    </td>
+                   @* <td></td>*@
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+</div>
+<!-- Modal -->
+<div class="modal fade" id="ModificarModal" tabindex="-1" role="dialog" aria-labelledby="ModificarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ModificarModalLabel">Modificar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Modificar" asp-controller="GruposDeInteres">
+                <div class="modal-body">
+
+                    <input name="Id" id="inputModificarId" type="hidden" />
+                    <input name="Grupo" type="text" class="form-control" id="inputModificarGrupo" />
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="EliminarModal" tabindex="-1" role="dialog" aria-labelledby="EliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="EliminarModalLabel">¿Seguro que quieres eliminar <span id="eliminarTitleGrupo"></span>?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Eliminar" asp-controller="GruposDeInteres">
+                <div class="modal-body">
+
+                    <input name="Id" id="inputEliminarId" type="hidden" />
+                    <input name="Grupo" type="hidden"  id="inputEliminarGrupo" />
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+                    <!-- Modal -->
+<div class="modal fade" id="AgregarModal" tabindex="-1" role="dialog" aria-labelledby="AgregarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="AgregarModalLabel">Agregar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Agregar" asp-controller="GruposDeInteres">
+                <div class="modal-body">
+
+                    <input name="Grupo" type="text" class="form-control" id="inputAgregarGrupo" />
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+    <script src="~/js/GruposDeInteres/Index.js"></script>
+}

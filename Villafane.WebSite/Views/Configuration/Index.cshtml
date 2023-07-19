@@ -1,0 +1,95 @@
+﻿
+@model ConfigurationViewModel
+@using Villafane.Domain.ViewModels;
+
+@{
+    string enBase64 = "";
+    
+    if(ViewBag.Logo != null)
+    {
+        enBase64 = Convert.ToBase64String((byte[])ViewBag.Logo);
+    }
+}
+
+<div class="container">
+    <h2>Configuración de la aplicación</h2>
+    <p>Personaliza la aplicación de este cliente.</p>
+<form method="post" asp-action="Index" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id"/>
+    <input type="hidden" asp-for="IdLogo"/>
+        <hr />
+        <h3>Colores Principales</h3>
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label" >Color Principal</label>
+            <p>Debe contrastar con el blanco de los botones.</p>
+            <input type="color" class="form-control form-control-color" id="exampleColorInput" asp-for="ColorPrincipal" title="Choose your color">
+            <button type="button" class="btn btn-primary m-3">Ejemplo</button>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label">Color Barra</label>
+              <p>Debe contrastar con el blanco de los botones del menú.</p>
+                        <input type="color" class="form-control form-control-color" id="exampleColorInput" asp-for="ColorBarra" title="Choose your color">
+        </div>
+    </div>
+        <hr />
+        <h3>Tablas</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label">Color Cabecera Tabla</label>
+                <p>Debe contrastar con el blanco de la cabecera.</p>
+                <input type="color" class="form-control form-control-color" id="exampleColorInput" asp-for="ColorCabeceraTabla" title="Choose your color">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label">Color Cabecera Tabla Vertical</label>
+                <p>Debe contrastar con el blanco de la cabecera.</p>
+                <input type="color" class="form-control form-control-color" id="exampleColorInput" asp-for="ColorCabeceraTablaVertical" title="Choose your color">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                    <th>EJEMPLO</th>
+                    <th>EJEMPLO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>Ejemplo Vertical</th>
+                        <td>Ejemplo Interior</td>
+                    </tr>
+                    <tr>
+                        <th>Ejemplo Vertical</th>
+                        <td>Ejemplo Interior</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <hr />
+     @if(ViewBag.Logo != null)
+     {
+
+<div class="row">
+        <div class="col-md-6">
+            <label class="form-label">Logo</label>
+            <img src="data:image/jpg;base64,@enBase64" style="max-width:100%"/>
+        </div>
+    </div>
+     }
+    
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label">Cambiar Logo</label>
+            <input type="file" asp-for="Logo" class="form-control" />
+        </div>
+    </div>
+        <hr />
+    <button type="submit" class="btn btn-primary btn-lg m-3">Guardar</button>
+</form>
+</div>

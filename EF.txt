@@ -1,0 +1,1 @@
+Scaffold-DbContext "Server=srvsqlvillafane.database.windows.net;Database=dbazsqlcltcetelem;Trusted_Connection=False;user id=adminvillafane;password=IozhHBZiNm0Z4BZmctUi;" -Context VillafaneContext Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models/DB -Force

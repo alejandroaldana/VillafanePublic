@@ -1,0 +1,206 @@
+﻿@using Villafane.Services.DB;
+@using Villafane.WebSite.Helpers;
+@using Villafane.Services.DB;
+@inject ConfigurationBusinessManager _conf_manager;
+
+@model List<Indicadore>
+@inject IndicadoresBusinessManager _ind_manager
+@inject GrupoDeInteresBusinessManager _gdi_manager
+@inject VariablesBusinessManager _var_manager
+@{
+    var escalas = await _ind_manager.ObtenerEscalasAsync();
+    var escalas_items = escalas.ForOptionalSelect(f => f.Descripcion, f => f.Id.ToString(), "Selecciona la escala...");
+    var gdis = await _gdi_manager.ObtenerTodosAsync();
+    var gdis_items =  gdis.ForOptionalSelect(f => f.Grupo, f => f.Id.ToString(), "Selecciona un grupo de interés...");
+    var variables = await _var_manager.ObtenerTodosAsync();
+    var variables_items = variables.ForOptionalSelect(f => f.Variable1, f => f.Id.ToString(), "Selecciona una variable...");
+    var listaPeriodos = await _conf_manager.ObtenerPeriodos();
+    string periodo = ViewBag.Periodo;
+
+}
+<h2>Indicadores</h2>
+<form asp-action="Index" method="get">
+    <div class="row bg-secondary rounded m-3 p-3">
+        <div class="col-2">
+            <label class="text-white">PERIODO</label>
+            <select class="form-control" name="periodo">
+                @foreach (var item in listaPeriodos)
+                {
+                    @if (item == periodo)
+                    {
+                        <option value="@item" selected>@item</option>
+
+                    }
+                    else
+                    {
+                        <option value="@item">@item</option>
+                    }
+
+                }
+            </select>
+        </div>
+
+        <div class="col-4">    <br /> <button type="submit" class="btn btn-primary">Cambiar Periodo</button></div>
+    </div>
+
+
+</form>
+@if (User.IsInRole("Admin") || User.IsInRole("Gestor"))
+{
+    <button class="btn btn-primary  m-3" id="btnAgregar">Agregar Indicador</button>
+
+}
+
+<div class="table-responsive">
+    <table class="table table-striped datatable">
+        <thead>
+            <tr>
+                <th>Stakeholder</th>
+                <th>Valor</th>
+                <th>Variable</th>
+                <th>Indicador</th>
+                <th>Fuente</th>
+                <th>Fecha</th>
+                <th>Fecha Uso</th>
+                <th>Escala</th>
+                <th>Dato</th>
+                <th>Normalizado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var indicador in Model)
+            {
+                <tr>
+                    <td>@indicador.IdGrupoInteresNavigation.Grupo</td>
+                    <td>@indicador.IdVariableNavigation.IdValorNavigation.Valor</td>
+                    <td>@indicador.IdVariableNavigation.Variable1</td>
+                    <td>@indicador.Indicador</td>
+                    <td>@indicador.Fuente</td>
+                    <td>@indicador.FechaIndicador</td>
+                    <td>@indicador.FechaUsoIndicador</td>
+                    <td>@indicador.IdEscalaNavigation.Descripcion</td>
+                    <td>@indicador.Dato.ToString("0.##")</td>
+                    <td>@indicador.DatoNormalizado.Value.ToString("0.##")</td>
+                    <td>
+                        @* <button class="btn btn-warning modificarGrupo" data-id="@grupo.Id" data-grupo="@grupo.Grupo">Modificar</button>
+                    <button class="btn btn-danger eliminarGrupo" data-id="@grupo.Id" data-grupo="@grupo.Grupo">Eliminar</button>*@
+                    </td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>
+
+<div class="modal fade" id="AgregarModal" tabindex="-1" role="dialog" aria-labelledby="AgregarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="AgregarModalLabel">Agregar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Agregar" asp-controller="Indicadores">
+                <div class="modal-body">
+
+                   <div class="row">
+                       <div class="col-md-6">
+                           <label>Grupo de Interés</label>
+                            <select class="form-control" asp-items="@gdis_items" name="IdGrupoInteres" id="selectAgregarGrupoInteres"></select>
+                       </div>
+                       <div class="col-md-6">
+                              <label>Variable</label>
+                            <select class="form-control" asp-items="@variables_items" name="IdVariable" id="selectAgregarVariables"></select>
+                      
+                       </div>
+                   </div>
+                   <div class="row">
+                       <div class="col-md-6">
+                           <label>Nombre Indicador</label>
+                           <input type="text" name="Indicador" id="inputAgregarIndicador" class="form-control"/>
+                       </div>
+                       <div class="col-md-6">
+                              <label>Fuente</label>
+                            <input type="text" name="Fuente" id="inputAgregarFuente" class="form-control" />
+
+                       </div>
+                   </div>
+                   <div class="row">
+                       <div class="col-md-6">
+                           <label>Fecha</label>
+                           <input type="number" name="FechaIndicador" id="inputAgregarFecha" class="form-control"/>
+                       </div>
+                       <div class="col-md-6">
+                              <label>Periodo</label>
+                              <select class="form-control" name="Periodo">
+                                @foreach (var item in listaPeriodos)
+                                {
+                                    @if (item == periodo)
+                                    {
+                                        <option value="@item" selected>@item</option>
+
+                                    }
+                                    else
+                                    {
+                                        <option value="@item">@item</option>
+                                    }
+
+                                }
+                            </select>
+                       </div>
+                   </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label>Escala</label>
+                            <select class="form-control" asp-items="@escalas_items" name="IdEscala" id="selectAgregarEscala"></select>
+                            <a id="btnAgregarEscala" class="btn btn-primary m-2">Nueva Escala</a>
+                        </div>
+                        
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Dato</label>
+                            <input inputmode="decimal" step="0.01" name="Dato" id="inputAgregarDato" class="form-control" />
+
+                        </div>
+                        <div class="col-md-6">
+                            <label>Dato Normalizado</label>
+                            <input inputmode="decimal" step="0.01" name="DatoNormalizado" id="inputAgregarDato" class="form-control" />
+
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal" id="ModalAgregarEscala" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Agregar Escala</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div><div class="container"></div>
+            <div class="modal-body">
+               <label>Descripción</label>
+               <input type="text" class="form-control" name="Descripcion" id="inputAgregarEscalaDescripcion"/>
+                <label>Mínimo</label>
+                <input type="number" class="form-control" name="Min" id="inputAgregarEscalaMin" />
+                <label>Máximo</label>
+                <input type="number" class="form-control" name="Max" id="inputAgregarEscalaMax" />
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-bs-dismiss="modal" class="btn btn-outline-dark">Cerrar</a>
+                <a href="#" class="btn btn-primary" id="btnGuardarEscala">Guardar</a>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/js/Indicadores/Index.js"></script>
+}
