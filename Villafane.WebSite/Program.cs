@@ -25,16 +25,16 @@ builder.Services.AddControllersWithViews(options =>
     options.ModelBinderProviders.Insert(0, new CustomBinderProvider());
 }).AddRazorRuntimeCompilation(); ;
 
-if (builder.Environment.IsDevelopment())
-{
-    var connectionString = builder.Configuration.GetConnectionString("VillafaneDBDev");
-    builder.Services.AddDbContext<VillafaneContext>(x => x.UseSqlServer(connectionString));
-}
-else
-{
+//if (builder.Environment.IsDevelopment())
+//{
+//    var connectionString = builder.Configuration.GetConnectionString("VillafaneDBDev");
+//    builder.Services.AddDbContext<VillafaneContext>(x => x.UseSqlServer(connectionString));
+//}
+//else
+//{
     var connectionString = builder.Configuration.GetConnectionString("VillafaneDBProd");
     builder.Services.AddDbContext<VillafaneContext>(x => x.UseSqlServer(connectionString));
-}
+//}
 builder.Services.AddScoped<GrupoDeInteresBusinessManager>();
 builder.Services.AddScoped<ValoresBusinessManager>();
 builder.Services.AddScoped<VariablesBusinessManager>();

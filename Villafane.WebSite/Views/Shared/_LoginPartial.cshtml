@@ -22,8 +22,8 @@
                 </a>
             </li>
         }
-      
-        <span class="navbar-text text-light">Hola @User.Identity?.Name!</span>
+
+        <span class="navbar-text text-light">Hola @User.Identity.Name!</span>
         <li class="nav-item">
             <a class="nav-link text-light" asp-area="" asp-controller="Account" asp-action="SignOut">Cerrar Sesión</a>
         </li>
@@ -37,9 +37,9 @@ else
     @if (!string.IsNullOrEmpty(enBase64))
     {
         
-   
+   @*
     <li class="nav-item">
             <img src="data:image/jpg;base64,@enBase64" style="max-height:50px;"/>
-    </li>
+    </li>*@
     }
 </ul>

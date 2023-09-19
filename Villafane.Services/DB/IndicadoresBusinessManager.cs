@@ -206,7 +206,8 @@ namespace Villafane.Services.DB
                     }
                     if (!string.IsNullOrEmpty(indExcel.GDI))
                     {
-                        int idgdi = int.Parse(indExcel.GDI);
+                        string output = new string(indExcel.GDI.Where(c => char.IsDigit(c)).ToArray());
+                        int idgdi = int.Parse(output);
                         GruposDeIntere? gdi = _context.GruposDeInteres.FirstOrDefault(x=>x.Id== idgdi);
 
                         if(gdi != null)
@@ -216,7 +217,8 @@ namespace Villafane.Services.DB
                     }
                     if (!string.IsNullOrEmpty(indExcel.VARIABLE))
                     {
-                        int idvariable = int.Parse(indExcel.VARIABLE);
+                        string output = new string(indExcel.VARIABLE.Where(c => char.IsDigit(c)).ToArray());
+                        int idvariable = int.Parse(output);
                         Variable? variable = _context.Variables.FirstOrDefault(x => x.Id == idvariable);
 
                         if (variable != null)
@@ -226,8 +228,11 @@ namespace Villafane.Services.DB
                     }
                     indicador.Indicador = indExcel.NOMBRE_INDICADOR;
                     indicador.Fuente = indExcel.FUENTE;
-                    indicador.FechaIndicador = int.Parse(indExcel.AÑO);
-                    indicador.FechaUsoIndicador= int.Parse(indExcel.AÑO_USO);
+                    string añoIndicador = new string(indExcel.AÑO.Where(c => char.IsDigit(c)).ToArray());
+                    indicador.FechaIndicador = int.Parse(añoIndicador);
+
+                    string añoUso = new string(indExcel.AÑO_USO.Where(c => char.IsDigit(c)).ToArray());
+                    indicador.FechaUsoIndicador= int.Parse(añoUso);
                     indicador.Dato = decimal.Parse(indExcel.DATO, numberFormatWithComma);
                     indicador.DatoNormalizado  = decimal.Parse(indExcel.DATO_NORMALIZADO, numberFormatWithComma);
                     indicador.Periodo = indExcel.PERIODO;

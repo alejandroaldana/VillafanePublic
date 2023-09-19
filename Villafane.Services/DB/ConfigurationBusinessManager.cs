@@ -70,5 +70,18 @@ namespace Villafane.Services.DB
         {
             return await _context.Periodos.OrderBy(x => x.Orden).Select(x => x.PeriodoDeEjecucion).ToListAsync();
         }
+
+        public async Task<List<Log>> ObtenerLogs()
+        {
+            var logs = await _context.Logs.OrderByDescending(x => x.Fecha).ToListAsync();
+
+            return logs;
+        }
+
+        public async Task GenerarLog(Log log)
+        {
+            _context.Add(log);
+            await _context.SaveChangesAsync();
+        }
     }
 }

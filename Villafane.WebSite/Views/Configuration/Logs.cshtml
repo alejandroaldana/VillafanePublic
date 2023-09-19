@@ -1,0 +1,31 @@
+﻿
+@model List<Log>
+
+<div class="container">
+    <h2>LOGS DE ACCESO</h2>
+    <div class="table-responsive">
+        <table class="table table-striped datatable">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Pantalla</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td>@log.Usuario</td>
+                        <td>@log.Pantalla</td>
+                        <td>@log.Fecha.Value.ToString("dd/MM/yyyy")</td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+
