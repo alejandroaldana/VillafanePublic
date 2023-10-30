@@ -83,5 +83,42 @@ namespace Villafane.Services.DB
             _context.Add(log);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<Periodo>> ObtenerPeriodosDTO()
+        {
+            return await _context.Periodos.OrderBy(x => x.Orden).ToListAsync();
+        }
+
+        public async Task GuardarPeriodo(Periodo periodo)
+        {
+            
+
+            await _context.AddAsync(periodo);
+            await _context.SaveChangesAsync();
+        } 
+        
+        public async Task EditarPeriodo(int id,string periodo,int orden)
+        {
+            Periodo periodoNuevo = new Periodo()
+            {
+                Id = id,
+                PeriodoDeEjecucion = periodo,
+                Orden = orden
+            };
+
+            _context.Update(periodoNuevo);
+            await _context.SaveChangesAsync();
+        } 
+        
+        public async Task EliminarPeriodo(int id)
+        {
+            Periodo periodo = new Periodo()
+            {
+                Id = id
+            };
+
+            _context.Remove(periodo);
+            await _context.SaveChangesAsync();
+        }
     }
 }

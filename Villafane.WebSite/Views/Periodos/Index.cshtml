@@ -1,0 +1,117 @@
+﻿@model List<Periodo>
+@{
+}
+<h2>Periodos</h2>
+@if (User.IsInRole("Admin") || User.IsInRole("Gestor"))
+{
+    <button class="btn btn-primary  m-3" id="btnAgregarPeriodo">Agregar Periodo</button>
+}
+<div class="table-responsive">
+    <table class="table table-striped datatable">
+        <thead>
+            <tr>
+                <th>Periodo</th>
+                <th>Orden</th>
+             <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var periodo in Model)
+            {
+                <tr>
+                    <td>@periodo.PeriodoDeEjecucion</td>
+                    <td>@periodo.Orden</td>
+                    <td>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Gestor"))
+                        {
+                        <button class="btn btn-warning modificarPeriodo" data-id="@periodo.Id" data-periodo="@periodo.PeriodoDeEjecucion" data-orden="@periodo.Orden">Modificar</button>
+                            <button class="btn btn-danger eliminarPeriodo" data-id="@periodo.Id" data-periodo="@periodo.PeriodoDeEjecucion">Eliminar</button>
+                        }   
+                    </td>
+                
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+</div>
+<!-- Modal -->
+<div class="modal fade" id="ModificarModal" tabindex="-1" role="dialog" aria-labelledby="ModificarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ModificarModalLabel">Modificar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Modificar" asp-controller="Periodos">
+                <div class="modal-body">
+
+                    <input name="Id" id="inputModificarId" type="hidden" />
+                    <label>Periodo</label><br />
+                    <input name="PeriodoDeEjecucion" type="text" class="form-control" id="inputModificarPeriodo" />
+                    <label>Orden</label><br />
+                    <input name="Orden" type="number" class="form-control" id="inputModificarOrden" />
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="EliminarModal" tabindex="-1" role="dialog" aria-labelledby="EliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="EliminarModalLabel">¿Seguro que quieres eliminar <span id="eliminarTitleGrupo"></span>?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Eliminar" asp-controller="Periodos">
+                <div class="modal-body">
+
+                    <input name="Id" id="inputEliminarId" type="hidden" />
+                  
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+                    <!-- Modal -->
+<div class="modal fade" id="AgregarModal" tabindex="-1" role="dialog" aria-labelledby="AgregarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="AgregarModalLabel">Agregar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Agregar" asp-controller="Periodos">
+                <div class="modal-body">
+                    <label>Periodo</label><br />
+                    <input name="PeriodoDeEjecucion" type="text" class="form-control" id="inputAgregarPeriodo" />
+                   <label>Orden</label>
+                   <br />
+                    <input name="Orden" type="number" class="form-control" id="inputAgregarOrden" />
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+    <script src="~/js/Periodos/Index.js"></script>
+}
