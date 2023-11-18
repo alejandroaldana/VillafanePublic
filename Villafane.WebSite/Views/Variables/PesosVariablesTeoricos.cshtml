@@ -9,42 +9,44 @@
     List<GruposDeIntere> gdis = (List<GruposDeIntere>)ViewBag.Gdi;
     List<(string, string)> booleanList = new List<(string, string)>() { ("Sí", "true"), ("No", "false") };
     var listaPeriodos = await _conf_manager.ObtenerPeriodos();
+    var config = await _conf_manager.ObtenerConfiguracionAsync();
     string periodo = ViewBag.Periodo;
 }
 
 <form asp-action="PesosVariablesTeoricos" method="get">
     <div class="row bg-secondary rounded m-3 p-3">
-        <div class="col-2"> 
+        <div class="col-2">
             <label class="text-white">PERIODO</label>
-            <select class="form-control" name="periodo" >
-        @foreach (var item in listaPeriodos)
-        {
-            @if(item == periodo)
-            {
-                <option value="@item" selected>@item</option>
+            <select class="form-control" name="periodo">
+                @foreach (var item in listaPeriodos)
+                {
+                    @if (item == periodo)
+                    {
+                        <option value="@item" selected>@item</option>
 
-            }else
-            {
-                 <option value="@item">@item</option>
-            }
+                    }
+                    else
+                    {
+                        <option value="@item">@item</option>
+                    }
 
-        }
-    </select>
-    </div>
+                }
+            </select>
+        </div>
 
         <div class="col-4">    <br /> <button type="submit" class="btn btn-primary">Cambiar Periodo</button></div>
     </div>
-   
-   
+
+
 </form>
 
 
 <form asp-action="PesosVariablesTeoricos" method="post">
 
     @if (User.IsInRole("Admin") || User.IsInRole("Gestor"))
-{
-    <button class="btn btn-primary" id="RecalcularAPartirDePesosValores" type="button">Recalcular a partir de pesos de Valores</button>
-}
+    {
+        <button class="btn btn-primary" id="RecalcularAPartirDePesosValores" type="button">Recalcular a partir de pesos de Valores</button>
+    }
 
     <input type="hidden" value="@periodo" asp-for="Periodo" />
     <div class="table-responsive">
@@ -145,7 +147,7 @@
                     {
                         <th scope="col">@item.Grupo</th>
                     }
-                
+
                 </tr>
             </thead>
             <tbody>
@@ -687,404 +689,823 @@
 
 
 @section Scripts{
-    <script>
-        var numColumnas = @(gdis.Count);
-        var numFilas = @(variables.Count);
+    @if (config.CambiarModoCalculo)
+    {
+        <script>
+            var numColumnas = @(gdis.Count);
+            var numFilas = @(variables.Count);
 
 
-        $(document).ready(function () {
-            for (var i = 1; i <= numColumnas; i++) {
-                var elementosColumna = $("[data-columna='" + i + "']");
-                var suma = 0;
-                elementosColumna.each(function (e) {
-                    var valorElemento = $(this).children(".inputValor").val();
-                    suma += parseFloat(valorElemento.replace(',', '.'));
-                });
-                $(".sumaTotalColumna" + i).html(suma.toFixed(4));
-            }
-            for (var i = 1; i <= numFilas; i++) {
-                var elementosFila = $("[data-fila='" + i + "']");
-                var suma = 0;
-                elementosFila.each(function (e) {
-                    var valorElemento = $(this).children(".inputValor").val();
-                    suma += parseFloat(valorElemento.replace(',', '.'));
-                });
-                $(".sumaTotalFila" + i).html(suma.toFixed(4));
-            }
-
-
-
-            for (var i = 1; i <= numColumnas; i++) {
-                var elementosColumna = $("[data-columnaTB4='" + i + "']");
-                var suma = 0;
-                elementosColumna.each(function (e) {
-                    var valorElemento = $(this).text();
-                    suma += parseFloat(valorElemento.replace(',', '.'));
-                });
-                $(".sumaTotalColumnaTB4" + i).html(suma.toFixed(4));
-            }
-
-            //-------TB5-------
-            for(var i = 1; i<=numColumnas;i++){
-                for(var j=1; j<=numFilas;j++){
-                    var elementoString = $("[data-columnaTB4='" + i + "'][data-filaTB4='" + j + "']").text();
-                    var porcentajeAntiguoString = $(".sumaTotalColumna"+i).text();
-                    var porcentajeNuevoString = $(".sumaTotalColumnaTB4" + i).text();
-                    elementoString = $.trim(elementoString);
-                    porcentajeAntiguoString = $.trim(porcentajeAntiguoString);
-                    porcentajeNuevoString = $.trim(porcentajeNuevoString);
-                  
-                    var elemento = parseFloat(elementoString.replace(',','.'));
-                    var porcentajeAntiguo = parseFloat(porcentajeAntiguoString);
-                    var porcentajeNuevo = parseFloat(porcentajeNuevoString);
-                    var resultado = 0;
-                    if(porcentajeNuevo != 0){
-                        resultado = (elemento * porcentajeAntiguo) / porcentajeNuevo;
-                    }
-
-                    $("[data-columnaTB5='" + i + "'][data-filaTB5='" + j + "']").html(resultado.toFixed(4));
-                }
-            }
-
-
-            
-            for (var i = 1; i <= numColumnas; i++) {
-                var elementosColumna = $("[data-columnaTB5='" + i + "']");
-                var suma = 0;
-                elementosColumna.each(function (e) {
-                    var valorElemento = $(this).text();
-                    suma += parseFloat(valorElemento.replace(',', '.'));
-                });
-                $(".sumaTotalColumnaTB5" + i).html(suma.toFixed(4));
-            }
-            var sumaTotalTB5 = 0;
-
-            //Calculo Total
-            for (var i = 1; i <= numColumnas; i++) {
-                var elementosColumna = $(".sumaTotalColumnaTB5" + i).text();
-                sumaTotalTB5 += parseFloat(elementosColumna);
-            }
-            $(".sumaTotalTotalesColumnaTB5").html(sumaTotalTB5.toFixed(4));
-
-
-            for (var i = 1; i <= numColumnas; i++) {
-                var elementosColumna = $(".sumaTotalColumnaTB5" + i).text();
-                var total = $(".sumaTotalTotalesColumnaTB5").text();
-                var resultado = 100* parseFloat(elementosColumna)/parseFloat(total);
-                $(".sumaTotalColumnaAjustadoTB5"+i).html(resultado.toFixed(4));
-            }
-            var sumaTotalTB5 = 0;
-            for (var i = 1; i <= numColumnas; i++){
-                 var elemento = $(".sumaTotalColumnaAjustadoTB5"+i).text();
-                 sumaTotalTB5 += parseFloat(elemento);
-            }
-            $(".sumaTotalTotalesColumnaAjustadoTB5").html(sumaTotalTB5.toFixed(0));
-
-            //-------TB6---------
-            $("#recalcularPesosDefinitivos").click(function(){
+            $(document).ready(function () {
+               
                 for (var i = 1; i <= numColumnas; i++) {
-                    for (var j = 1; j <= numFilas; j++) {
-                        var elementoString = $("[data-columnaTB5='" + i + "'][data-filaTB5='" + j + "']").text();
-                        var porcentajeAjustadoString = $(".sumaTotalTotalesColumnaAjustadoTB5").text();
-                        var porcentajeString = $(".sumaTotalTotalesColumnaTB5").text();
-                        elementoString = $.trim(elementoString);
-                        porcentajeString = $.trim(porcentajeString);
-                        porcentajeAjustadoString = $.trim(porcentajeAjustadoString);
-
-                        var elemento = parseFloat(elementoString.replace(',', '.'));
-                        var porcentaje = parseFloat(porcentajeString);
-                        var porcentajeAjustado = parseFloat(porcentajeAjustadoString);
-                        var resultado = 0;
-                        if (porcentaje != 0) {
-                            resultado = (elemento * porcentajeAjustado) / porcentaje;
-                        }
-
-                        //$("[data-columnaTB6='" + i + "'][data-filaTB6='" + j + "']").html(resultado.toFixed(4));
-                        $("[data-columnaTB6='" + i + "'][data-filaTB6='" + j + "']").children(".inputValor").val(resultado.toFixed(4).replace(".",","));
-                    }
-                }
-                CalcularSumasTotalesTB6();
-            })
-            CalcularSumasTotalesTB6();
-            function CalcularSumasTotalesTB6(){
-                for (var i = 1; i <= numColumnas; i++) {
-                    var elementosColumna = $("[data-columnaTB6='" + i + "']");
+                    var elementosColumna = $("[data-columna='" + i + "']");
                     var suma = 0;
                     elementosColumna.each(function (e) {
                         var valorElemento = $(this).children(".inputValor").val();
                         suma += parseFloat(valorElemento.replace(',', '.'));
                     });
-                    $(".sumaTotalColumnaTB6" + i).html(suma.toFixed(4));
+                    $(".sumaTotalColumna" + i).html(suma.toFixed(4));
                 }
-                var sumaTotalTB6 = 0;
+                for (var i = 1; i <= numFilas; i++) {
+                    var elementosFila = $("[data-fila='" + i + "']");
+                    var suma = 0;
+                    elementosFila.each(function (e) {
+                        var valorElemento = $(this).children(".inputValor").val();
+                        suma += parseFloat(valorElemento.replace(',', '.'));
+                    });
+                    $(".sumaTotalFila" + i).html(suma.toFixed(4));
+                }
+
+
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elementosColumna = $("[data-columnaTB4='" + i + "']");
+                    var suma = 0;
+                    elementosColumna.each(function (e) {
+                        var valorElemento = $(this).text();
+                        suma += parseFloat(valorElemento.replace(',', '.'));
+                    });
+                    $(".sumaTotalColumnaTB4" + i).html(suma.toFixed(4));
+                }
+
+                //-------TB5-------
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var elementoString = $("[data-columnaTB4='" + i + "'][data-filaTB4='" + j + "']").text();
+                        var porcentajeAntiguoString = $(".sumaTotalColumna" + i).text();
+                        var porcentajeNuevoString = $(".sumaTotalColumnaTB4" + i).text();
+                        elementoString = $.trim(elementoString);
+                        porcentajeAntiguoString = $.trim(porcentajeAntiguoString);
+                        porcentajeNuevoString = $.trim(porcentajeNuevoString);
+
+                        var elemento = parseFloat(elementoString.replace(',', '.'));
+                        var porcentajeAntiguo = parseFloat(porcentajeAntiguoString);
+                        var porcentajeNuevo = parseFloat(porcentajeNuevoString);
+                        var resultado = 0;
+                        if (porcentajeNuevo != 0) {
+                            resultado = (elemento * porcentajeAntiguo) / porcentajeNuevo;
+                        }
+
+                        $("[data-columnaTB5='" + i + "'][data-filaTB5='" + j + "']").html(resultado.toFixed(4));
+                    }
+                }
+
+
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elementosColumna = $("[data-columnaTB5='" + i + "']");
+                    var suma = 0;
+                    elementosColumna.each(function (e) {
+                        var valorElemento = $(this).text();
+                        suma += parseFloat(valorElemento.replace(',', '.'));
+                    });
+                    $(".sumaTotalColumnaTB5" + i).html(suma.toFixed(4));
+                }
+                var sumaTotalTB5 = 0;
 
                 //Calculo Total
                 for (var i = 1; i <= numColumnas; i++) {
-                    var elementosColumna = $(".sumaTotalColumnaTB6" + i).text();
-                    sumaTotalTB6 += parseFloat(elementosColumna);
+                    var elementosColumna = $(".sumaTotalColumnaTB5" + i).text();
+                    sumaTotalTB5 += parseFloat(elementosColumna);
                 }
-                $(".sumaTotalTotalesColumnaTB6").html(sumaTotalTB6.toFixed(4));
-
-            }
-
-
-            function RecalcularAPartirDePesosValores(){
-                var pesosValores = ObtenerPesosValores();
-                var variables = ObtenerVariables();
-                var gdi = ObtenerGruposDeInteres();
-                console.log("test");
-
-
-                //Recalcular pesos variables con pesos valores
-                //for (var i = 1; i <= numColumnas; i++) {
-                //    for (var j = 1; j <= numFilas; j++) {
-                //        var elementoString = $("[data-columna='" + i + "'][data-fila='" + j + "']");
-                //        var idVariable = elementoString.data("idvariable");
-                //        var idGdi = elementoString.data("idgdi");
-
-                //        var variable = variables.find((o) => { return o["id"] === idVariable});
-                //        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
-                //        var numVariablesEnValor = variables.filter((o) => { return o["idValor"] === variable.idValor }).length;
-
-                //        var pesorVariableTeorico = pesoValor.valorTeorico/numVariablesEnValor;
-                //        elementoString.children(".inputValor").val(pesorVariableTeorico.toFixed(4).replace(".",","));
-                //       console.log("test");
-                //    }
-                //}
-
-
+                $(".sumaTotalTotalesColumnaTB5").html(sumaTotalTB5.toFixed(4));
 
 
                 for (var i = 1; i <= numColumnas; i++) {
-                    for (var j = 1; j <= numFilas; j++) {
-                        var pesoTeoricoVariable = $("[data-columna='" + i + "'][data-fila='" + j + "']").children(".inputValor").val();
-                        var elemento = parseFloat(pesoTeoricoVariable.replace(',', '.'));
-                        var elementoString = $("[data-columnaTB12='" + i + "'][data-filaTB12='" + j + "']");
-                        var idVariable = elementoString.data("idvariable");
-                        var idGdi = elementoString.data("idgdi");
-
-                        var variable = variables.find((o) => { return o["id"] === idVariable });
-                        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
-                       
-
-                        var pesorVariable12 =(elemento *100) / pesoValor.valorTeorico;
-                        elementoString.children(".inputValor").val(pesorVariable12.toFixed(4).replace(".", ","));
-                        console.log("test");
-                    }
+                    var elementosColumna = $(".sumaTotalColumnaTB5" + i).text();
+                    var total = $(".sumaTotalTotalesColumnaTB5").text();
+                    var resultado = 100 * parseFloat(elementosColumna) / parseFloat(total);
+                    $(".sumaTotalColumnaAjustadoTB5" + i).html(resultado.toFixed(4));
                 }
+                var sumaTotalTB5 = 0;
                 for (var i = 1; i <= numColumnas; i++) {
-                    for (var j = 1; j <= numFilas; j++) {
-                        var peso12 = $("[data-columnaTB12='" + i + "'][data-filaTB12='" + j + "']").children(".inputValor").val();
-                        var elemento = parseFloat(pesoTeoricoVariable.replace(',', '.'));
-                        var informacionDisponibleTD =$("[data-columnaTBIF='" + i + "'][data-filaTBIF='" + j + "']").children("p").text();
-                        informacionDisponibleTD = $.trim(informacionDisponibleTD);
-                        var informacionDisponible;
-                        if(informacionDisponibleTD == "Sí"){
-                            informacionDisponible = true;
-                        }else{
-                            informacionDisponible = false;
+                    var elemento = $(".sumaTotalColumnaAjustadoTB5" + i).text();
+                    sumaTotalTB5 += parseFloat(elemento);
+                }
+                $(".sumaTotalTotalesColumnaAjustadoTB5").html(sumaTotalTB5.toFixed(0));
+
+                //-------TB6---------
+                $("#recalcularPesosDefinitivos").click(function () {
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var elementoString = $("[data-columnaTB5='" + i + "'][data-filaTB5='" + j + "']").text();
+                            var porcentajeAjustadoString = $(".sumaTotalTotalesColumnaAjustadoTB5").text();
+                            var porcentajeString = $(".sumaTotalTotalesColumnaTB5").text();
+                            elementoString = $.trim(elementoString);
+                            porcentajeString = $.trim(porcentajeString);
+                            porcentajeAjustadoString = $.trim(porcentajeAjustadoString);
+
+                            var elemento = parseFloat(elementoString.replace(',', '.'));
+                            var porcentaje = parseFloat(porcentajeString);
+                            var porcentajeAjustado = parseFloat(porcentajeAjustadoString);
+                            var resultado = 0;
+                            if (porcentaje != 0) {
+                                resultado = (elemento * porcentajeAjustado) / porcentaje;
+                            }
+
+                            //$("[data-columnaTB6='" + i + "'][data-filaTB6='" + j + "']").html(resultado.toFixed(4));
+                            $("[data-columnaTB6='" + i + "'][data-filaTB6='" + j + "']").children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
                         }
-                        var elementoString = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']");
-                        var idVariable = elementoString.data("idvariabletb21");
-                        var idGdi = elementoString.data("idgditb21");
-
-                        var variable = variables.find((o) => { return o["id"] === idVariable });
-                        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
-
-                        var resultado = "0,00";
-                        if (informacionDisponible){
-                            resultado = peso12;
-                        }
-                        
-                        elementoString.children(".inputValor").val(resultado);
-                        console.log("test");
                     }
-                }
-
-                for (var i = 1; i <= numColumnas; i++) {
-                    for (var j = 1; j <= numFilas; j++) {
-                        var peso21 = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']").children(".inputValor").val();
-                        var elemento = parseFloat(peso21.replace(',', '.'));
-                        
-                        var elementoString = $("[data-columnaTB22='" + i + "'][data-filaTB22='" + j + "']");
-                        var idVariable = elementoString.data("idvariable");
-                        var idGdi = elementoString.data("idgdi");
-
-                        var variable = variables.find((o) => { return o["id"] === idVariable });
-                        var valor = variable.idValor;
-                        var variablesEnValor = variables.filter((o) => { return o["idValor"] == valor });
-                        var sumaEnValor = 0;
-                        variablesEnValor.forEach(function (e) {
-                            var valorElemento = $("[data-idgditb21='" + idGdi + "'][data-idvariabletb21='" + e.id + "']").children(".inputValor").val();
-                            sumaEnValor += parseFloat(valorElemento.replace(',', '.'));
+                    CalcularSumasTotalesTB6();
+                   
+                })
+                CalcularSumasTotalesTB6();
+                function CalcularSumasTotalesTB6() {
+                    for (var i = 1; i <= numColumnas; i++) {
+                        var elementosColumna = $("[data-columnaTB6='" + i + "']");
+                        var suma = 0;
+                        elementosColumna.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
                         });
+                        $(".sumaTotalColumnaTB6" + i).html(suma.toFixed(4));
+                    }
+                    var sumaTotalTB6 = 0;
 
-                        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+                    //Calculo Total
+                    for (var i = 1; i <= numColumnas; i++) {
+                        var elementosColumna = $(".sumaTotalColumnaTB6" + i).text();
+                        sumaTotalTB6 += parseFloat(elementosColumna);
+                    }
+                    $(".sumaTotalTotalesColumnaTB6").html(sumaTotalTB6.toFixed(4));
 
-                        var resultado;
-                        if(sumaEnValor == 0){
-                            resultado = 0;
-                        }else{
-                            resultado = elemento*100/sumaEnValor;
+                }
+
+
+                function RecalcularAPartirDePesosValores() {
+                    mostrarSpinner();
+                    var pesosValores = ObtenerPesosValores();
+                    var variables = ObtenerVariables();
+                    var gdi = ObtenerGruposDeInteres();
+                    console.log("test");
+
+
+                    //Recalcular pesos variables con pesos valores
+                    //for (var i = 1; i <= numColumnas; i++) {
+                    //    for (var j = 1; j <= numFilas; j++) {
+                    //        var elementoString = $("[data-columna='" + i + "'][data-fila='" + j + "']");
+                    //        var idVariable = elementoString.data("idvariable");
+                    //        var idGdi = elementoString.data("idgdi");
+
+                    //        var variable = variables.find((o) => { return o["id"] === idVariable});
+                    //        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+                    //        var numVariablesEnValor = variables.filter((o) => { return o["idValor"] === variable.idValor }).length;
+
+                    //        var pesorVariableTeorico = pesoValor.valorTeorico/numVariablesEnValor;
+                    //        elementoString.children(".inputValor").val(pesorVariableTeorico.toFixed(4).replace(".",","));
+                    //       console.log("test");
+                    //    }
+                    //}
+
+
+
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var pesoTeoricoVariable = $("[data-columna='" + i + "'][data-fila='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(pesoTeoricoVariable.replace(',', '.'));
+                            var elementoString = $("[data-columnaTB12='" + i + "'][data-filaTB12='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
+
+                            var variable = variables.find((o) => { return o["id"] === idVariable });
+                            var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+
+
+                            var pesorVariable12 = (elemento * 100) / pesoValor.valorTeorico;
+                            elementoString.children(".inputValor").val(pesorVariable12.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso12 = $("[data-columnaTB12='" + i + "'][data-filaTB12='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(pesoTeoricoVariable.replace(',', '.'));
+                            var informacionDisponibleTD = $("[data-columnaTBIF='" + i + "'][data-filaTBIF='" + j + "']").children("p").text();
+                            informacionDisponibleTD = $.trim(informacionDisponibleTD);
+                            var informacionDisponible;
+                            if (informacionDisponibleTD == "Sí") {
+                                informacionDisponible = true;
+                            } else {
+                                informacionDisponible = false;
+                            }
+                            var elementoRaiz = $("[data-columna='" + i + "'][data-fila='" + j + "']").children(".inputValor").val();
+                            var elementoString = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']");
+                            var idVariable = elementoString.data("idvariabletb21");
+                            var idGdi = elementoString.data("idgditb21");
+
+                            var variable = variables.find((o) => { return o["id"] === idVariable });
+                            var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+
+                            var resultado = "0,00";
+                            if (informacionDisponible) {
+                                resultado = elementoRaiz;
+                            }
+
+                            elementoString.children(".inputValor").val(resultado);
+                            console.log("test");
+                        }
+                    }
+                    //Calculo Total
+                    for (var i = 1; i <= numColumnas; i++) {
+                        var elementosColumna = $("[data-columnaTB21='" + i + "']");
+                        var suma = 0;
+                        elementosColumna.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
+                        });
+                        $(".sumaTotalColumnaTB21" + i).html(suma.toFixed(4));
+                    }
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso21 = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(peso21.replace(',', '.'));
+
+                            var elementoString = $("[data-columnaTB22='" + i + "'][data-filaTB22='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
+
+                            var variable = variables.find((o) => { return o["id"] === idVariable });
+                            var valor = variable.idValor;
+                            var variablesEnValor = variables.filter((o) => { return o["idValor"] == valor });
+                            var sumaEnValor = 0;
+                            variablesEnValor.forEach(function (e) {
+                                var valorElemento = $("[data-idgditb21='" + idGdi + "'][data-idvariabletb21='" + e.id + "']").children(".inputValor").val();
+                                sumaEnValor += parseFloat(valorElemento.replace(',', '.'));
+                            });
+
+                            var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+
+                            var resultado;
+                            if (sumaEnValor == 0) {
+                                resultado = 0;
+                            } else {
+                                resultado = elemento * 100 / sumaEnValor;
+                            }
+
+                            elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+
+                            var totalColumna = parseFloat($(".sumaTotalColumnaTB21" + i).text());
+                            var totalTeorico = parseFloat($(".sumaTotalColumna" + i).text());
+                            var elementoStringTB21 = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']");
+                            var elemento = parseFloat(elementoStringTB21.children(".inputValor").val().replace(',', '.'));
+                            var resultado = 0;
+                            if (totalColumna != 0) {
+                                resultado = (elemento * totalTeorico) / totalColumna;
+                            }
+
+
+
+
+
+                            $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+                    for (var i = 1; i <= numColumnas; i++) {
+                        var elementosColumna = $("[data-columnaTB23='" + i + "']");
+                        var suma = 0;
+                        elementosColumna.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
+                        });
+                        $(".sumaTotalColumnaTB23" + i).html(suma.toFixed(4).replace(".", ","));
+                    }
+                    for (var i = 1; i <= numFilas; i++) {
+                        var elementosFila = $("[data-filaTB23='" + i + "']");
+                        var suma = 0;
+                        elementosFila.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
+                        });
+                        $(".sumaTotalFilaTB23" + i).html(suma.toFixed(4));
+                    }
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso23 = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(peso23.replace(',', '.'));
+                            var sumaColumna = $(".sumaTotalColumnaTB23" + i).text();
+                            sumaColumna = $.trim(sumaColumna);
+                            var sumaColumnaValue = parseFloat(sumaColumna.replace(',', '.'));
+                            var elementoString = $("[data-columnaTB3='" + i + "'][data-filaTB3='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
+
+                            var resultado;
+                            if (sumaColumnaValue == 0) {
+                                resultado = 0;
+                            } else {
+                                resultado = elemento / sumaColumnaValue;
+                            }
+                            resultado = resultado * 100;
+                            elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso23 = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(peso23.replace(',', '.'));
+                            var sumaFila = $(".sumaTotalFilaTB23" + j).text();
+                            sumaFila = $.trim(sumaFila);
+                            var sumaFilaValue = parseFloat(sumaFila.replace(',', '.'));
+                            var elementoString = $("[data-columnaTB4='" + i + "'][data-filaTB4='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
+
+                            var resultado;
+                            if (sumaFilaValue == 0) {
+                                resultado = 0;
+                            } else {
+                                resultado = elemento / sumaFilaValue;
+                            }
+                            resultado = resultado * 100;
+                            elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+                    for (var i = 1; i <= numFilas; i++) {
+                        var elementosFila = $("[data-filaTB4='" + i + "']");
+                        var suma = 0;
+                        elementosFila.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
+                        });
+                        $(".sumaTotalFilaTB4" + i).html(suma.toFixed(4));
+                    }
+
+                }
+
+                function ObtenerPesosValores() {
+                    var pesosValores;
+                    $.ajax({
+                        url: '/Valores/ObtenerPesosValores?periodo=@periodo',
+                        method: 'get',
+                        async: false,
+                        success: function (data) {
+                            pesosValores = data;
+                        },
+                        error: function () {
+                            alert("No se ha podio obtener los pesos de los valores");
                         }
 
-                        elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
-                        console.log("test");
-                    }
+
+                    });
+                    ocultarSpinner();
+                    return pesosValores;
+                }
+                function ObtenerVariables() {
+                    var variables;
+                    $.ajax({
+                        url: '/Variables/ObtenerVariablesJson',
+                        async: false,
+                        method: 'get',
+                        success: function (data) {
+                            variables = data;
+                        },
+                        error: function () {
+                            alert("No se ha podio obtener las variables");
+                        }
+                    });
+                    return variables;
+                }
+                function ObtenerGruposDeInteres() {
+                    var gdi;
+                    $.ajax({
+                        url: '/GruposDeInteres/ObtenerGruposDeInteresJson',
+                        async: false,
+                        method: 'get',
+                        success: function (data) {
+                            gdi = data;
+                        },
+                        error: function () {
+                            alert("No se ha podio obtener los grupos de interes");
+                        }
+                    });
+                    return gdi;
                 }
 
+                $("#RecalcularAPartirDePesosValores").on("click", function () {
+                    RecalcularAPartirDePesosValores();
+                })
+            });
+        </script>
+    }
+    else
+    {
+        <script>
+            var numColumnas = @(gdis.Count);
+            var numFilas = @(variables.Count);
+
+
+            $(document).ready(function () {
                 for (var i = 1; i <= numColumnas; i++) {
-                    for (var j = 1; j <= numFilas; j++) {
-                        var peso22 = $("[data-columnaTB22='" + i + "'][data-filaTB22='" + j + "']").children(".inputValor").val();
-                        var elemento = parseFloat(peso22.replace(',', '.'));
-                        
-
-                        var elementoString = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']");
-                        var idVariable = elementoString.data("idvariable");
-                        var idGdi = elementoString.data("idgdi");
-
-                        var variable = variables.find((o) => { return o["id"] === idVariable });
-                        var valor = variable.idValor;
-
-                        var pesoValor = pesosValores.find((o) => { return o["idValor"] === valor && o["idGrupoInteres"] == idGdi });
-
-                        var resultado;
-
-                        resultado = pesoValor.tb23 * elemento/100;
-
-                        elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
-                        console.log("test");
-                    }
-                }
-                for (var i = 1; i <= numColumnas; i++) {
-                    var elementosColumna = $("[data-columnaTB23='" + i + "']");
+                    var elementosColumna = $("[data-columna='" + i + "']");
                     var suma = 0;
                     elementosColumna.each(function (e) {
                         var valorElemento = $(this).children(".inputValor").val();
                         suma += parseFloat(valorElemento.replace(',', '.'));
                     });
-                    $(".sumaTotalColumnaTB23" + i).html(suma.toFixed(4).replace(".",","));
+                    $(".sumaTotalColumna" + i).html(suma.toFixed(4));
                 }
                 for (var i = 1; i <= numFilas; i++) {
-                    var elementosFila = $("[data-filaTB23='" + i + "']");
+                    var elementosFila = $("[data-fila='" + i + "']");
                     var suma = 0;
                     elementosFila.each(function (e) {
                         var valorElemento = $(this).children(".inputValor").val();
                         suma += parseFloat(valorElemento.replace(',', '.'));
                     });
-                    $(".sumaTotalFilaTB23" + i).html(suma.toFixed(4));
+                    $(".sumaTotalFila" + i).html(suma.toFixed(4));
                 }
 
-                for (var i = 1; i <= numColumnas; i++) {
-                    for (var j = 1; j <= numFilas; j++) {
-                        var peso23 = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val();
-                        var elemento = parseFloat(peso23.replace(',', '.'));
-                        var sumaColumna = $(".sumaTotalColumnaTB23" + i).text();
-                        sumaColumna = $.trim(sumaColumna);
-                        var sumaColumnaValue = parseFloat(sumaColumna.replace(',','.'));
-                        var elementoString = $("[data-columnaTB3='" + i + "'][data-filaTB3='" + j + "']");
-                        var idVariable = elementoString.data("idvariable");
-                        var idGdi = elementoString.data("idgdi");
-                        
-                        var resultado;
-                        if(sumaColumnaValue == 0){
-                            resultado = 0;
-                        }else{
-                            resultado = elemento / sumaColumnaValue;
-                        }
-                        resultado = resultado *100;
-                        elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
-                        console.log("test");
-                    }
-                }
+
 
                 for (var i = 1; i <= numColumnas; i++) {
-                    for (var j = 1; j <= numFilas; j++) {
-                        var peso23 = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val();
-                        var elemento = parseFloat(peso23.replace(',', '.'));
-                        var sumaFila = $(".sumaTotalFilaTB23" + j).text();
-                        sumaFila = $.trim(sumaFila);
-                        var sumaFilaValue = parseFloat(sumaFila.replace(',', '.'));
-                        var elementoString = $("[data-columnaTB4='" + i + "'][data-filaTB4='" + j + "']");
-                        var idVariable = elementoString.data("idvariable");
-                        var idGdi = elementoString.data("idgdi");
-                        
-                        var resultado;
-                        if (sumaFilaValue == 0) {
-                            resultado = 0;
-                        }else{
-                            resultado = elemento / sumaFilaValue;
-                        }
-                        resultado = resultado *100;
-                        elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
-                        console.log("test");
-                    }
-                }
-                for (var i = 1; i <= numFilas; i++) {
-                    var elementosFila = $("[data-filaTB4='" + i + "']");
+                    var elementosColumna = $("[data-columnaTB4='" + i + "']");
                     var suma = 0;
-                    elementosFila.each(function (e) {
-                        var valorElemento = $(this).children(".inputValor").val();
+                    elementosColumna.each(function (e) {
+                        var valorElemento = $(this).text();
                         suma += parseFloat(valorElemento.replace(',', '.'));
                     });
-                    $(".sumaTotalFilaTB4" + i).html(suma.toFixed(4));
+                    $(".sumaTotalColumnaTB4" + i).html(suma.toFixed(4));
                 }
-               
-            }
 
-            function ObtenerPesosValores(){
-                var pesosValores;
-                $.ajax({
-                    url: '/Valores/ObtenerPesosValores?periodo=@periodo',
-                    method: 'get',
-                    async : false,
-                    success: function(data){
-                        pesosValores = data;
-                    },
-                    error: function(){
-                        alert("No se ha podio obtener los pesos de los valores");
+                //-------TB5-------
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var elementoString = $("[data-columnaTB4='" + i + "'][data-filaTB4='" + j + "']").text();
+                        var porcentajeAntiguoString = $(".sumaTotalColumna" + i).text();
+                        var porcentajeNuevoString = $(".sumaTotalColumnaTB4" + i).text();
+                        elementoString = $.trim(elementoString);
+                        porcentajeAntiguoString = $.trim(porcentajeAntiguoString);
+                        porcentajeNuevoString = $.trim(porcentajeNuevoString);
+
+                        var elemento = parseFloat(elementoString.replace(',', '.'));
+                        var porcentajeAntiguo = parseFloat(porcentajeAntiguoString);
+                        var porcentajeNuevo = parseFloat(porcentajeNuevoString);
+                        var resultado = 0;
+                        if (porcentajeNuevo != 0) {
+                            resultado = (elemento * porcentajeAntiguo) / porcentajeNuevo;
+                        }
+
+                        $("[data-columnaTB5='" + i + "'][data-filaTB5='" + j + "']").html(resultado.toFixed(4));
+                    }
+                }
+
+
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elementosColumna = $("[data-columnaTB5='" + i + "']");
+                    var suma = 0;
+                    elementosColumna.each(function (e) {
+                        var valorElemento = $(this).text();
+                        suma += parseFloat(valorElemento.replace(',', '.'));
+                    });
+                    $(".sumaTotalColumnaTB5" + i).html(suma.toFixed(4));
+                }
+                var sumaTotalTB5 = 0;
+
+                //Calculo Total
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elementosColumna = $(".sumaTotalColumnaTB5" + i).text();
+                    sumaTotalTB5 += parseFloat(elementosColumna);
+                }
+                $(".sumaTotalTotalesColumnaTB5").html(sumaTotalTB5.toFixed(4));
+
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elementosColumna = $(".sumaTotalColumnaTB5" + i).text();
+                    var total = $(".sumaTotalTotalesColumnaTB5").text();
+                    var resultado = 100 * parseFloat(elementosColumna) / parseFloat(total);
+                    $(".sumaTotalColumnaAjustadoTB5" + i).html(resultado.toFixed(4));
+                }
+                var sumaTotalTB5 = 0;
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elemento = $(".sumaTotalColumnaAjustadoTB5" + i).text();
+                    sumaTotalTB5 += parseFloat(elemento);
+                }
+                $(".sumaTotalTotalesColumnaAjustadoTB5").html(sumaTotalTB5.toFixed(0));
+
+                //-------TB6---------
+                $("#recalcularPesosDefinitivos").click(function () {
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var elementoString = $("[data-columnaTB5='" + i + "'][data-filaTB5='" + j + "']").text();
+                            var porcentajeAjustadoString = $(".sumaTotalTotalesColumnaAjustadoTB5").text();
+                            var porcentajeString = $(".sumaTotalTotalesColumnaTB5").text();
+                            elementoString = $.trim(elementoString);
+                            porcentajeString = $.trim(porcentajeString);
+                            porcentajeAjustadoString = $.trim(porcentajeAjustadoString);
+
+                            var elemento = parseFloat(elementoString.replace(',', '.'));
+                            var porcentaje = parseFloat(porcentajeString);
+                            var porcentajeAjustado = parseFloat(porcentajeAjustadoString);
+                            var resultado = 0;
+                            if (porcentaje != 0) {
+                                resultado = (elemento * porcentajeAjustado) / porcentaje;
+                            }
+
+                            //$("[data-columnaTB6='" + i + "'][data-filaTB6='" + j + "']").html(resultado.toFixed(4));
+                            $("[data-columnaTB6='" + i + "'][data-filaTB6='" + j + "']").children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                        }
+                    }
+                    CalcularSumasTotalesTB6();
+                })
+                CalcularSumasTotalesTB6();
+                function CalcularSumasTotalesTB6() {
+                    for (var i = 1; i <= numColumnas; i++) {
+                        var elementosColumna = $("[data-columnaTB6='" + i + "']");
+                        var suma = 0;
+                        elementosColumna.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
+                        });
+                        $(".sumaTotalColumnaTB6" + i).html(suma.toFixed(4));
+                    }
+                    var sumaTotalTB6 = 0;
+
+                    //Calculo Total
+                    for (var i = 1; i <= numColumnas; i++) {
+                        var elementosColumna = $(".sumaTotalColumnaTB6" + i).text();
+                        sumaTotalTB6 += parseFloat(elementosColumna);
+                    }
+                    $(".sumaTotalTotalesColumnaTB6").html(sumaTotalTB6.toFixed(4));
+
+                }
+
+
+                function RecalcularAPartirDePesosValores() {
+                    var pesosValores = ObtenerPesosValores();
+                    var variables = ObtenerVariables();
+                    var gdi = ObtenerGruposDeInteres();
+                    console.log("test");
+
+
+                    //Recalcular pesos variables con pesos valores
+                    //for (var i = 1; i <= numColumnas; i++) {
+                    //    for (var j = 1; j <= numFilas; j++) {
+                    //        var elementoString = $("[data-columna='" + i + "'][data-fila='" + j + "']");
+                    //        var idVariable = elementoString.data("idvariable");
+                    //        var idGdi = elementoString.data("idgdi");
+
+                    //        var variable = variables.find((o) => { return o["id"] === idVariable});
+                    //        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+                    //        var numVariablesEnValor = variables.filter((o) => { return o["idValor"] === variable.idValor }).length;
+
+                    //        var pesorVariableTeorico = pesoValor.valorTeorico/numVariablesEnValor;
+                    //        elementoString.children(".inputValor").val(pesorVariableTeorico.toFixed(4).replace(".",","));
+                    //       console.log("test");
+                    //    }
+                    //}
+
+
+
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var pesoTeoricoVariable = $("[data-columna='" + i + "'][data-fila='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(pesoTeoricoVariable.replace(',', '.'));
+                            var elementoString = $("[data-columnaTB12='" + i + "'][data-filaTB12='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
+
+                            var variable = variables.find((o) => { return o["id"] === idVariable });
+                            var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+
+
+                            var pesorVariable12 = (elemento * 100) / pesoValor.valorTeorico;
+                            elementoString.children(".inputValor").val(pesorVariable12.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso12 = $("[data-columnaTB12='" + i + "'][data-filaTB12='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(pesoTeoricoVariable.replace(',', '.'));
+                            var informacionDisponibleTD = $("[data-columnaTBIF='" + i + "'][data-filaTBIF='" + j + "']").children("p").text();
+                            informacionDisponibleTD = $.trim(informacionDisponibleTD);
+                            var informacionDisponible;
+                            if (informacionDisponibleTD == "Sí") {
+                                informacionDisponible = true;
+                            } else {
+                                informacionDisponible = false;
+                            }
+                            var elementoString = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']");
+                            var idVariable = elementoString.data("idvariabletb21");
+                            var idGdi = elementoString.data("idgditb21");
+
+                            var variable = variables.find((o) => { return o["id"] === idVariable });
+                            var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+
+                            var resultado = "0,00";
+                            if (informacionDisponible) {
+                                resultado = peso12;
+                            }
+
+                            elementoString.children(".inputValor").val(resultado);
+                            console.log("test");
+                        }
                     }
 
-                    
-                });
-                return pesosValores;
-            }
-            function ObtenerVariables(){
-                var variables;
-                $.ajax({
-                    url: '/Variables/ObtenerVariablesJson',
-                    async: false,
-                    method: 'get',
-                    success: function(data){
-                        variables = data;
-                    },
-                    error: function(){
-                        alert("No se ha podio obtener las variables");
-                    }
-                });
-                return variables;
-            }
-            function ObtenerGruposDeInteres() {
-                var gdi;
-                $.ajax({
-                    url: '/GruposDeInteres/ObtenerGruposDeInteresJson',
-                    async: false,
-                    method: 'get',
-                    success: function (data) {
-                        gdi = data;
-                    },
-                    error: function () {
-                        alert("No se ha podio obtener los grupos de interes");
-                    }
-                });
-                return gdi;
-            }
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso21 = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(peso21.replace(',', '.'));
 
-            $("#RecalcularAPartirDePesosValores").on("click",function(){
-                RecalcularAPartirDePesosValores();
-            })
-        });
-    </script>
+                            var elementoString = $("[data-columnaTB22='" + i + "'][data-filaTB22='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
 
- 
+                            var variable = variables.find((o) => { return o["id"] === idVariable });
+                            var valor = variable.idValor;
+                            var variablesEnValor = variables.filter((o) => { return o["idValor"] == valor });
+                            var sumaEnValor = 0;
+                            variablesEnValor.forEach(function (e) {
+                                var valorElemento = $("[data-idgditb21='" + idGdi + "'][data-idvariabletb21='" + e.id + "']").children(".inputValor").val();
+                                sumaEnValor += parseFloat(valorElemento.replace(',', '.'));
+                            });
+
+                            var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+
+                            var resultado;
+                            if (sumaEnValor == 0) {
+                                resultado = 0;
+                            } else {
+                                resultado = elemento * 100 / sumaEnValor;
+                            }
+
+                            elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso22 = $("[data-columnaTB22='" + i + "'][data-filaTB22='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(peso22.replace(',', '.'));
+
+
+                            var elementoString = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
+
+                            var variable = variables.find((o) => { return o["id"] === idVariable });
+                            var valor = variable.idValor;
+
+                            var pesoValor = pesosValores.find((o) => { return o["idValor"] === valor && o["idGrupoInteres"] == idGdi });
+
+                            var resultado;
+
+                            resultado = pesoValor.tb23 * elemento / 100;
+
+                            elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+                    for (var i = 1; i <= numColumnas; i++) {
+                        var elementosColumna = $("[data-columnaTB23='" + i + "']");
+                        var suma = 0;
+                        elementosColumna.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
+                        });
+                        $(".sumaTotalColumnaTB23" + i).html(suma.toFixed(4).replace(".", ","));
+                    }
+                    for (var i = 1; i <= numFilas; i++) {
+                        var elementosFila = $("[data-filaTB23='" + i + "']");
+                        var suma = 0;
+                        elementosFila.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
+                        });
+                        $(".sumaTotalFilaTB23" + i).html(suma.toFixed(4));
+                    }
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso23 = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(peso23.replace(',', '.'));
+                            var sumaColumna = $(".sumaTotalColumnaTB23" + i).text();
+                            sumaColumna = $.trim(sumaColumna);
+                            var sumaColumnaValue = parseFloat(sumaColumna.replace(',', '.'));
+                            var elementoString = $("[data-columnaTB3='" + i + "'][data-filaTB3='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
+
+                            var resultado;
+                            if (sumaColumnaValue == 0) {
+                                resultado = 0;
+                            } else {
+                                resultado = elemento / sumaColumnaValue;
+                            }
+                            resultado = resultado * 100;
+                            elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+
+                    for (var i = 1; i <= numColumnas; i++) {
+                        for (var j = 1; j <= numFilas; j++) {
+                            var peso23 = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val();
+                            var elemento = parseFloat(peso23.replace(',', '.'));
+                            var sumaFila = $(".sumaTotalFilaTB23" + j).text();
+                            sumaFila = $.trim(sumaFila);
+                            var sumaFilaValue = parseFloat(sumaFila.replace(',', '.'));
+                            var elementoString = $("[data-columnaTB4='" + i + "'][data-filaTB4='" + j + "']");
+                            var idVariable = elementoString.data("idvariable");
+                            var idGdi = elementoString.data("idgdi");
+
+                            var resultado;
+                            if (sumaFilaValue == 0) {
+                                resultado = 0;
+                            } else {
+                                resultado = elemento / sumaFilaValue;
+                            }
+                            resultado = resultado * 100;
+                            elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                            console.log("test");
+                        }
+                    }
+                    for (var i = 1; i <= numFilas; i++) {
+                        var elementosFila = $("[data-filaTB4='" + i + "']");
+                        var suma = 0;
+                        elementosFila.each(function (e) {
+                            var valorElemento = $(this).children(".inputValor").val();
+                            suma += parseFloat(valorElemento.replace(',', '.'));
+                        });
+                        $(".sumaTotalFilaTB4" + i).html(suma.toFixed(4));
+                    }
+
+                }
+
+                function ObtenerPesosValores() {
+                    var pesosValores;
+                    $.ajax({
+                        url: '/Valores/ObtenerPesosValores?periodo=@periodo',
+                        method: 'get',
+                        async: false,
+                        success: function (data) {
+                            pesosValores = data;
+                        },
+                        error: function () {
+                            alert("No se ha podio obtener los pesos de los valores");
+                        }
+
+
+                    });
+                    return pesosValores;
+                }
+                function ObtenerVariables() {
+                    var variables;
+                    $.ajax({
+                        url: '/Variables/ObtenerVariablesJson',
+                        async: false,
+                        method: 'get',
+                        success: function (data) {
+                            variables = data;
+                        },
+                        error: function () {
+                            alert("No se ha podio obtener las variables");
+                        }
+                    });
+                    return variables;
+                }
+                function ObtenerGruposDeInteres() {
+                    var gdi;
+                    $.ajax({
+                        url: '/GruposDeInteres/ObtenerGruposDeInteresJson',
+                        async: false,
+                        method: 'get',
+                        success: function (data) {
+                            gdi = data;
+                        },
+                        error: function () {
+                            alert("No se ha podio obtener los grupos de interes");
+                        }
+                    });
+                    return gdi;
+                }
+
+                $("#RecalcularAPartirDePesosValores").on("click", function () {
+                    RecalcularAPartirDePesosValores();
+                })
+            });
+        </script>
+
+
+    }
+
+
+
 }

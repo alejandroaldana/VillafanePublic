@@ -162,5 +162,20 @@ namespace Villafane.WebSite.Controllers
 
             return RedirectToAction("CargarPesosVariables");
         }
+        public async Task<IActionResult> ObtenerSumaAtributos(string periodo)
+        {
+            var resultado = await _manager.ObtenerSumaAtributos(periodo);
+            List<List<VariablesDisponiblesEnValor>> resultadoLista = new List<List<VariablesDisponiblesEnValor>>();
+            for (int i = 0; i < resultado.GetLength(0); i++)
+            {
+                List<VariablesDisponiblesEnValor> innerList = new List<VariablesDisponiblesEnValor>();
+                for (int j = 0; j < resultado.GetLength(1); j++)
+                {
+                    innerList.Add(resultado[i, j]);
+                }
+                resultadoLista.Add(innerList);
+            }
+            return Json(resultadoLista);
+        }
     }
 }

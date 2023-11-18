@@ -32,6 +32,7 @@ namespace Villafane.WebSite.Controllers
                 configViewModel.ColorCabeceraTablaVertical = config.ColorCabeceraTablasVertical;
                 configViewModel.IdLogo = config.IdLogo;
                 configViewModel.Id = config.Id;
+                configViewModel.CambiarModoCalculo = config.CambiarModoCalculo;
             }
             return View(configViewModel);
         }
@@ -46,6 +47,7 @@ namespace Villafane.WebSite.Controllers
                 config.ColorPrincipal = model.ColorPrincipal;
                 config.ColorCabecerasTablas = model.ColorCabeceraTabla;
                 config.ColorCabeceraTablasVertical = model.ColorCabeceraTablaVertical;
+                config.CambiarModoCalculo = model.CambiarModoCalculo;
                 if (model.Id != null)
                 {
                     config.Id = model.Id.Value;

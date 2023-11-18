@@ -1,0 +1,1090 @@
+﻿@using Villafane.WebSite.Helpers;
+@using Villafane.Services.DB;
+@inject ConfigurationBusinessManager _conf_manager;
+@model PesosVariablesTeoricosViewModel
+@{
+    List<Variable> variables = (List<Variable>)ViewBag.Variables;
+    List<Valore> valores = (List<Valore>)ViewBag.Valores;
+    List<PesosValoresTeorico> pesos_valores_teoricos = (List<PesosValoresTeorico>)ViewBag.PesosValoresTeoricos;
+    List<GruposDeIntere> gdis = (List<GruposDeIntere>)ViewBag.Gdi;
+    List<(string, string)> booleanList = new List<(string, string)>() { ("Sí", "true"), ("No", "false") };
+    var listaPeriodos = await _conf_manager.ObtenerPeriodos();
+    string periodo = ViewBag.Periodo;
+}
+
+<form asp-action="PesosVariablesTeoricos" method="get">
+    <div class="row bg-secondary rounded m-3 p-3">
+        <div class="col-2"> 
+            <label class="text-white">PERIODO</label>
+            <select class="form-control" name="periodo" >
+        @foreach (var item in listaPeriodos)
+        {
+            @if(item == periodo)
+            {
+                <option value="@item" selected>@item</option>
+
+            }else
+            {
+                 <option value="@item">@item</option>
+            }
+
+        }
+    </select>
+    </div>
+
+        <div class="col-4">    <br /> <button type="submit" class="btn btn-primary">Cambiar Periodo</button></div>
+    </div>
+   
+   
+</form>
+
+
+<form asp-action="PesosVariablesTeoricos" method="post">
+
+    @if (User.IsInRole("Admin") || User.IsInRole("Gestor"))
+{
+    <button class="btn btn-primary" id="RecalcularAPartirDePesosValores" type="button">Recalcular a partir de pesos de Valores</button>
+}
+
+    <input type="hidden" value="@periodo" asp-for="Periodo" />
+    <div class="table-responsive">
+        <h2>Pesos Variables Teoricos</h2>
+        <table class="table table-striped table1">
+            <thead>
+                <tr>
+                    <th scope="col">Variables</th>
+                    @foreach (var item in gdis)
+                    {
+                        <th scope="col">@item.Grupo </th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int i = 0;
+                    int j = 1;
+                }
+                @foreach (var variable in variables)
+                {
+
+                    <tr>
+                        <th class="w-25">@variable.Variable1</th>
+                        @{
+                            int k = 1;
+                        }
+                        @foreach (var gdi in gdis)
+                        {
+
+                            var peso = Model.Pesos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id).FirstOrDefault();
+                            if (peso != null)
+                            {
+                                <td width="80" data-fila="@j" data-columna="@k" data-idGdi="@gdi.Id" data-idVariable="@variable.Id">
+                                    <input type="hidden" name="Pesos[@i].Id" value="@peso.Id" />
+                                    <input type="hidden" name="Pesos[@i].IdVariable" value="@peso.IdVariable" />
+                                    <input type="hidden" name="Pesos[@i].IdGrupoInteres" value="@peso.IdGrupoInteres" />
+                                    <input type="hidden" name="Pesos[@i].InformacionDisponible" value="@peso.InformacionDisponible" />
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@i].ValorTeorico" value="@peso.ValorTeorico.ToString("0.0000")" lang="en" class="form-control inputValor" />
+                                </td>
+                            }
+                            else
+                            {
+                                <td width="80" data-fila="@j" data-columna="@k" data-idGdi="@gdi.Id" data-idVariable="@variable.Id">
+                                    <input type="hidden" name="Pesos[@i].IdVariable" value="@variable.Id" />
+                                    <input type="hidden" name="Pesos[@i].IdGrupoInteres" value="@gdi.Id" />
+                                    <input type="hidden" name="Pesos[@i].InformacionDisponible" value="true" />
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@i].ValorTeorico" value="0" class="form-control inputValor" lang="en" />
+                                </td>
+                            }
+
+                            i++;
+                            k++;
+                        }
+                        <td class="sumaTotalFila@(j)" style="width:50px"></td>
+                    </tr>
+                    j++;
+                }
+
+
+
+                <tr>
+                    <td class="w-25"></td>
+                    @{
+                        int h = 1;
+                    }
+                    @foreach (var gdi in gdis)
+                    {
+
+                        <td class="sumaTotalColumna@(h)"></td>
+                        h++;
+                    }
+                    <td class="sumaTotal" style="width:50px"></td>
+                </tr>
+
+
+            </tbody>
+        </table>
+    </div>
+    @if (User.IsInRole("Admin") || User.IsInRole("Gestor"))
+    {
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a asp-action="CalcularDisponibilidad" asp-route-periodo="@periodo" class="btn btn-primary">Recalcular Disponibilidad</a>
+    }
+
+    @{
+        int itbif = 1;
+        int jtbif = 1;
+    }
+    <div class="table-responsive">
+        <h2>Información Disponible</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Variables</th>
+                    @foreach (var item in gdis)
+                    {
+                        <th scope="col">@item.Grupo</th>
+                    }
+                
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var variable in variables)
+                {
+
+                    <tr>
+                        <th class="w-25">@variable.Variable1</th>
+                        @{
+                            int k = 1;
+                        }
+                        @foreach (var gdi in gdis)
+                        {
+
+                            var peso = Model.Pesos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id).FirstOrDefault();
+                            <td width="80" data-filaTBIF="@jtbif" data-columnaTBIF="@k" data-idGdi="@gdi.Id" data-idVariable="@variable.Id">
+                                @if (peso != null)
+                                {
+                                    <p>
+                                        @if (peso.InformacionDisponible == true)
+                                        {
+                                            <text>Sí</text>
+                                        }
+                                        else
+                                        {
+                                            <text>No</text>
+                                        }
+                                    </p>
+                                }
+                                else
+                                {
+                                    <text>N/A</text>
+                                }
+
+                            </td>
+                            itbif++;
+                            k++;
+
+                        }
+
+                    </tr>
+                    jtbif++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-responsive">
+        <h2>Tabla 1.2 Importancia teórica del Variable en el Criterio del GDI (GDI base 100%)</h2>
+        <table class="table table-striped table1">
+            <thead>
+                <tr>
+                    <th scope="col">Variables</th>
+                    @foreach (var item in gdis)
+                    {
+                        <th scope="col">@item.Grupo </th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int i12 = 0;
+                    int j12 = 1;
+                }
+                @foreach (var variable in variables)
+                {
+
+                    <tr>
+                        <th class="w-25">@variable.Variable1</th>
+                        @{
+                            int k = 1;
+                        }
+                        @foreach (var gdi in gdis)
+                        {
+
+                            var peso = Model.Pesos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id).FirstOrDefault();
+
+                            if (peso != null)
+                            {
+                                if (peso.Tb12 == null)
+                                {
+                                    peso.Tb12 = 0;
+                                }
+                                <td width="80" data-filaTB12="@j12" data-columnaTB12="@k" data-idGdi="@gdi.Id" data-idVariable="@variable.Id">
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@i12].Tb12" value="@peso.Tb12.Value.ToString("0.0000")" lang="en" class="form-control inputValor" readonly />
+                                </td>
+                            }
+                            else
+                            {
+                                <td width="80" data-filaTB12="@j12" data-columnaTB12="@k" data-idGdi="@gdi.Id" data-idVariable="@variable.Id">
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@i12].Tb12" value="0" class="form-control inputValor" lang="en" readonly />
+                                </td>
+                            }
+
+                            i12++;
+                            k++;
+                        }
+                        <td class="sumaTotalFilaTB12@(j12)" style="width:50px"></td>
+                    </tr>
+                    j12++;
+                }
+
+
+
+                <tr>
+                    <td class="w-25"></td>
+                    @{
+                        int h12 = 1;
+                    }
+                    @foreach (var gdi in gdis)
+                    {
+
+                        <td class="sumaTotalColumnaTB12@(h12)"></td>
+                        h12++;
+                    }
+                    <td class="sumaTotal" style="width:50px"></td>
+                </tr>
+
+
+            </tbody>
+        </table>
+    </div>
+    @{
+        int a = 1;
+        int tb21i = 0;
+        int tb21j = 1;
+
+    }
+    <div class="table-responsive">
+        <h2>TB.2.1  Ajuste pesos objetivo en el Valor del GDI ajustada a información disponible</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Variables</th>
+                    @foreach (var item in gdis)
+                    {
+                        <th scope="col">@item.Grupo</th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var variable in variables)
+                {
+
+                    <tr>
+                        <th class="w-25">@variable.Variable1</th>
+                        @{
+                            int k = 1;
+                        }
+                        @foreach (var gdi in gdis)
+                        {
+
+                            var peso = Model.Pesos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id).FirstOrDefault();
+                            <td data-idGdiTB21="@gdi.Id" data-idVariableTB21="@variable.Id" data-filaTB21="@tb21j" data-columnaTB21="@k">
+                                @if (peso != null)
+                                {
+                                    if (peso.Tb21 == null)
+                                    {
+                                        peso.Tb21 = 0;
+                                    }
+
+                                    @if (peso.InformacionDisponible == true)
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb21i].Tb21" value="@peso.Tb21.Value.ToString("0.0000")" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+                                    else
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb21i].Tb21" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+
+                                }
+                                else
+                                {
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@tb21i].Tb21" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                }
+
+                            </td>
+
+
+                            tb21i++;
+                            k++;
+                        }
+
+                    </tr>
+                    tb21j++;
+                }
+                <tr>
+                    <td></td>
+                    @foreach (var gdi in gdis)
+                    {
+
+
+                        <td data-sumId="@gdi.Id" class="sumaTotalColumnaTB21@(a)">
+                        </td>
+
+                        a++;
+
+                    }
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    @{
+        a = 1;
+        int tb22i = 0;
+        int tb22j = 1;
+
+    }
+    <div class="table-responsive">
+        <h2>TB.2.2  Peso del Variable en el Valor del GdI Ajustada y Corregida (Valor base 100%)</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Variables</th>
+                    @foreach (var item in gdis)
+                    {
+                        <th scope="col">@item.Grupo</th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var variable in variables)
+                {
+
+                    <tr>
+                        <th class="w-25">@variable.Variable1</th>
+                        @{
+                            int k = 1;
+                        }
+                        @foreach (var gdi in gdis)
+                        {
+
+                            var peso = Model.Pesos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id).FirstOrDefault();
+                            <td data-idGdi="@gdi.Id" data-idVariable="@variable.Id" data-filaTB22="@tb22j" data-columnaTB22="@k">
+                                @if (peso != null)
+                                {
+                                    if (peso.Tb22 == null)
+                                    {
+                                        peso.Tb22 = 0;
+                                    }
+
+                                    @if (peso.InformacionDisponible == true)
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb22i].Tb22" value="@peso.Tb22.Value.ToString("0.0000")" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+                                    else
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb22i].Tb22" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+
+                                }
+                                else
+                                {
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@tb22i].Tb22" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                }
+
+                            </td>
+
+
+                            tb22i++;
+                            k++;
+                        }
+
+                    </tr>
+                    tb22j++;
+                }
+                <tr>
+                    <td></td>
+                    @foreach (var gdi in gdis)
+                    {
+
+
+                        <td data-sumId="@gdi.Id" class="sumaTotalColumnaTB22@(a)">
+                        </td>
+
+                        a++;
+
+                    }
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    @{
+        a = 1;
+        int tb23i = 0;
+        int tb23j = 1;
+
+    }
+    <div class="table-responsive">
+        <h2>TB.2.3  Importancia del Variable para el IGR ajustada a la información disponible</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Variables</th>
+                    @foreach (var item in gdis)
+                    {
+                        <th scope="col">@item.Grupo</th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var variable in variables)
+                {
+
+                    <tr>
+                        <th class="w-25">@variable.Variable1</th>
+                        @{
+                            int k = 1;
+                        }
+                        @foreach (var gdi in gdis)
+                        {
+
+                            var peso = Model.Pesos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id).FirstOrDefault();
+                            <td data-idGdi="@gdi.Id" data-idVariable="@variable.Id" data-filaTB23="@tb23j" data-columnaTB23="@k">
+
+                                @if (peso != null)
+                                {
+                                    if (peso.Tb23 == null)
+                                    {
+                                        peso.Tb23 = 0;
+                                    }
+
+                                    @if (peso.InformacionDisponible == true)
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb23i].Tb23" value="@peso.Tb23.Value.ToString("0.0000")" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+                                    else
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb23i].Tb23" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+
+                                }
+                                else
+                                {
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@tb23i].Tb23" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                }
+
+                            </td>
+
+
+                            tb23i++;
+                            k++;
+                        }
+                        <td class="sumaTotalFilaTB23@(tb23j)"></td>
+                    </tr>
+                    tb23j++;
+                }
+                <tr>
+                    <td></td>
+                    @foreach (var gdi in gdis)
+                    {
+
+
+                        <td data-sumId="@gdi.Id" class="sumaTotalColumnaTB23@(a)">
+                        </td>
+
+                        a++;
+
+                    }
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    @{
+        a = 1;
+        int tb3i = 0;
+        int tb3j = 1;
+
+    }
+    <div class="table-responsive">
+        <h2>TB.3  Importancia para el GdI visión Grupo de Interés</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Variables</th>
+                    @foreach (var item in gdis)
+                    {
+                        <th scope="col">@item.Grupo</th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var variable in variables)
+                {
+
+                    <tr>
+                        <th class="w-25">@variable.Variable1</th>
+                        @{
+                            int k = 1;
+                        }
+                        @foreach (var gdi in gdis)
+                        {
+
+                            var peso = Model.Pesos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id).FirstOrDefault();
+                            <td data-idGdi="@gdi.Id" data-idVariable="@variable.Id" data-filaTB3="@tb3j" data-columnaTB3="@k">
+                                @if (peso != null)
+                                {
+                                    if (peso.Tb3 == null)
+                                    {
+                                        peso.Tb3 = 0;
+                                    }
+                                    @if (peso.InformacionDisponible == true)
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb3i].Tb3" value="@peso.Tb3.Value.ToString("0.0000")" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+                                    else
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb3i].Tb3" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+
+                                }
+                                else
+                                {
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@tb3i].Tb3" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                }
+
+                            </td>
+
+
+                            tb3i++;
+                            k++;
+                        }
+
+                    </tr>
+                    tb3j++;
+                }
+                <tr>
+                    <td></td>
+                    @foreach (var gdi in gdis)
+                    {
+
+
+                        <td data-sumId="@gdi.Id" class="sumaTotalColumnaTB3@(a)">
+                        </td>
+
+                        a++;
+
+                    }
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    @{
+        a = 1;
+        int tb4i = 0;
+        int tb4j = 1;
+
+    }
+    <div class="table-responsive">
+        <h2>TB.4  Importancia para el GdI visión Variable</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Variables</th>
+                    @foreach (var item in gdis)
+                    {
+                        <th scope="col">@item.Grupo</th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var variable in variables)
+                {
+
+                    <tr>
+                        <th class="w-25">@variable.Variable1</th>
+                        @{
+                            int k = 1;
+                        }
+                        @foreach (var gdi in gdis)
+                        {
+
+                            var peso = Model.Pesos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id).FirstOrDefault();
+                            <td data-idGdi="@gdi.Id" data-idVariable="@variable.Id" data-filaTB4="@tb4j" data-columnaTB4="@k">
+                                @if (peso != null)
+                                {
+                                    if (peso.Tb4 == null)
+                                    {
+                                        peso.Tb4 = 0;
+                                    }
+                                    @if (peso.InformacionDisponible == true)
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb4i].Tb4" value="@peso.Tb4.Value.ToString("0.0000")" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+                                    else
+                                    {
+                                        <input inputmode="decimal" step="0.0001" name="Pesos[@tb4i].Tb4" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                    }
+
+                                }
+                                else
+                                {
+                                    <input inputmode="decimal" step="0.0001" name="Pesos[@tb4i].Tb4" value="0" lang="en" class="form-control inputValor" readonly />
+
+                                }
+
+                            </td>
+
+
+                            tb4i++;
+                            k++;
+                        }
+                        <td class="sumaTotalFilaTB4@(tb4j)"></td>
+                    </tr>
+                    tb4j++;
+                }
+
+            </tbody>
+        </table>
+    </div>
+
+</form>
+
+
+@section Scripts{
+    <script>
+        var numColumnas = @(gdis.Count);
+        var numFilas = @(variables.Count);
+
+
+        $(document).ready(function () {
+            for (var i = 1; i <= numColumnas; i++) {
+                var elementosColumna = $("[data-columna='" + i + "']");
+                var suma = 0;
+                elementosColumna.each(function (e) {
+                    var valorElemento = $(this).children(".inputValor").val();
+                    suma += parseFloat(valorElemento.replace(',', '.'));
+                });
+                $(".sumaTotalColumna" + i).html(suma.toFixed(4));
+            }
+            for (var i = 1; i <= numFilas; i++) {
+                var elementosFila = $("[data-fila='" + i + "']");
+                var suma = 0;
+                elementosFila.each(function (e) {
+                    var valorElemento = $(this).children(".inputValor").val();
+                    suma += parseFloat(valorElemento.replace(',', '.'));
+                });
+                $(".sumaTotalFila" + i).html(suma.toFixed(4));
+            }
+
+
+
+            for (var i = 1; i <= numColumnas; i++) {
+                var elementosColumna = $("[data-columnaTB4='" + i + "']");
+                var suma = 0;
+                elementosColumna.each(function (e) {
+                    var valorElemento = $(this).text();
+                    suma += parseFloat(valorElemento.replace(',', '.'));
+                });
+                $(".sumaTotalColumnaTB4" + i).html(suma.toFixed(4));
+            }
+
+            //-------TB5-------
+            for(var i = 1; i<=numColumnas;i++){
+                for(var j=1; j<=numFilas;j++){
+                    var elementoString = $("[data-columnaTB4='" + i + "'][data-filaTB4='" + j + "']").text();
+                    var porcentajeAntiguoString = $(".sumaTotalColumna"+i).text();
+                    var porcentajeNuevoString = $(".sumaTotalColumnaTB4" + i).text();
+                    elementoString = $.trim(elementoString);
+                    porcentajeAntiguoString = $.trim(porcentajeAntiguoString);
+                    porcentajeNuevoString = $.trim(porcentajeNuevoString);
+                  
+                    var elemento = parseFloat(elementoString.replace(',','.'));
+                    var porcentajeAntiguo = parseFloat(porcentajeAntiguoString);
+                    var porcentajeNuevo = parseFloat(porcentajeNuevoString);
+                    var resultado = 0;
+                    if(porcentajeNuevo != 0){
+                        resultado = (elemento * porcentajeAntiguo) / porcentajeNuevo;
+                    }
+
+                    $("[data-columnaTB5='" + i + "'][data-filaTB5='" + j + "']").html(resultado.toFixed(4));
+                }
+            }
+
+
+            
+            for (var i = 1; i <= numColumnas; i++) {
+                var elementosColumna = $("[data-columnaTB5='" + i + "']");
+                var suma = 0;
+                elementosColumna.each(function (e) {
+                    var valorElemento = $(this).text();
+                    suma += parseFloat(valorElemento.replace(',', '.'));
+                });
+                $(".sumaTotalColumnaTB5" + i).html(suma.toFixed(4));
+            }
+            var sumaTotalTB5 = 0;
+
+            //Calculo Total
+            for (var i = 1; i <= numColumnas; i++) {
+                var elementosColumna = $(".sumaTotalColumnaTB5" + i).text();
+                sumaTotalTB5 += parseFloat(elementosColumna);
+            }
+            $(".sumaTotalTotalesColumnaTB5").html(sumaTotalTB5.toFixed(4));
+
+
+            for (var i = 1; i <= numColumnas; i++) {
+                var elementosColumna = $(".sumaTotalColumnaTB5" + i).text();
+                var total = $(".sumaTotalTotalesColumnaTB5").text();
+                var resultado = 100* parseFloat(elementosColumna)/parseFloat(total);
+                $(".sumaTotalColumnaAjustadoTB5"+i).html(resultado.toFixed(4));
+            }
+            var sumaTotalTB5 = 0;
+            for (var i = 1; i <= numColumnas; i++){
+                 var elemento = $(".sumaTotalColumnaAjustadoTB5"+i).text();
+                 sumaTotalTB5 += parseFloat(elemento);
+            }
+            $(".sumaTotalTotalesColumnaAjustadoTB5").html(sumaTotalTB5.toFixed(0));
+
+            //-------TB6---------
+            $("#recalcularPesosDefinitivos").click(function(){
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var elementoString = $("[data-columnaTB5='" + i + "'][data-filaTB5='" + j + "']").text();
+                        var porcentajeAjustadoString = $(".sumaTotalTotalesColumnaAjustadoTB5").text();
+                        var porcentajeString = $(".sumaTotalTotalesColumnaTB5").text();
+                        elementoString = $.trim(elementoString);
+                        porcentajeString = $.trim(porcentajeString);
+                        porcentajeAjustadoString = $.trim(porcentajeAjustadoString);
+
+                        var elemento = parseFloat(elementoString.replace(',', '.'));
+                        var porcentaje = parseFloat(porcentajeString);
+                        var porcentajeAjustado = parseFloat(porcentajeAjustadoString);
+                        var resultado = 0;
+                        if (porcentaje != 0) {
+                            resultado = (elemento * porcentajeAjustado) / porcentaje;
+                        }
+
+                        //$("[data-columnaTB6='" + i + "'][data-filaTB6='" + j + "']").html(resultado.toFixed(4));
+                        $("[data-columnaTB6='" + i + "'][data-filaTB6='" + j + "']").children(".inputValor").val(resultado.toFixed(4).replace(".",","));
+                    }
+                }
+                CalcularSumasTotalesTB6();
+            })
+            CalcularSumasTotalesTB6();
+            function CalcularSumasTotalesTB6(){
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elementosColumna = $("[data-columnaTB6='" + i + "']");
+                    var suma = 0;
+                    elementosColumna.each(function (e) {
+                        var valorElemento = $(this).children(".inputValor").val();
+                        suma += parseFloat(valorElemento.replace(',', '.'));
+                    });
+                    $(".sumaTotalColumnaTB6" + i).html(suma.toFixed(4));
+                }
+                var sumaTotalTB6 = 0;
+
+                //Calculo Total
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elementosColumna = $(".sumaTotalColumnaTB6" + i).text();
+                    sumaTotalTB6 += parseFloat(elementosColumna);
+                }
+                $(".sumaTotalTotalesColumnaTB6").html(sumaTotalTB6.toFixed(4));
+
+            }
+
+
+            function RecalcularAPartirDePesosValores(){
+                var pesosValores = ObtenerPesosValores();
+                var variables = ObtenerVariables();
+                var gdi = ObtenerGruposDeInteres();
+                console.log("test");
+
+
+                //Recalcular pesos variables con pesos valores
+                //for (var i = 1; i <= numColumnas; i++) {
+                //    for (var j = 1; j <= numFilas; j++) {
+                //        var elementoString = $("[data-columna='" + i + "'][data-fila='" + j + "']");
+                //        var idVariable = elementoString.data("idvariable");
+                //        var idGdi = elementoString.data("idgdi");
+
+                //        var variable = variables.find((o) => { return o["id"] === idVariable});
+                //        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+                //        var numVariablesEnValor = variables.filter((o) => { return o["idValor"] === variable.idValor }).length;
+
+                //        var pesorVariableTeorico = pesoValor.valorTeorico/numVariablesEnValor;
+                //        elementoString.children(".inputValor").val(pesorVariableTeorico.toFixed(4).replace(".",","));
+                //       console.log("test");
+                //    }
+                //}
+
+
+
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var pesoTeoricoVariable = $("[data-columna='" + i + "'][data-fila='" + j + "']").children(".inputValor").val();
+                        var elemento = parseFloat(pesoTeoricoVariable.replace(',', '.'));
+                        var elementoString = $("[data-columnaTB12='" + i + "'][data-filaTB12='" + j + "']");
+                        var idVariable = elementoString.data("idvariable");
+                        var idGdi = elementoString.data("idgdi");
+
+                        var variable = variables.find((o) => { return o["id"] === idVariable });
+                        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+                       
+
+                        var pesorVariable12 =(elemento *100) / pesoValor.valorTeorico;
+                        elementoString.children(".inputValor").val(pesorVariable12.toFixed(4).replace(".", ","));
+                        console.log("test");
+                    }
+                }
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var peso12 = $("[data-columnaTB12='" + i + "'][data-filaTB12='" + j + "']").children(".inputValor").val();
+                        var elemento = parseFloat(pesoTeoricoVariable.replace(',', '.'));
+                        var informacionDisponibleTD =$("[data-columnaTBIF='" + i + "'][data-filaTBIF='" + j + "']").children("p").text();
+                        informacionDisponibleTD = $.trim(informacionDisponibleTD);
+                        var informacionDisponible;
+                        if(informacionDisponibleTD == "Sí"){
+                            informacionDisponible = true;
+                        }else{
+                            informacionDisponible = false;
+                        }
+                        var elementoString = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']");
+                        var idVariable = elementoString.data("idvariabletb21");
+                        var idGdi = elementoString.data("idgditb21");
+
+                        var variable = variables.find((o) => { return o["id"] === idVariable });
+                        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+
+                        var resultado = "0,00";
+                        if (informacionDisponible){
+                            resultado = peso12;
+                        }
+                        
+                        elementoString.children(".inputValor").val(resultado);
+                        console.log("test");
+                    }
+                }
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var peso21 = $("[data-columnaTB21='" + i + "'][data-filaTB21='" + j + "']").children(".inputValor").val();
+                        var elemento = parseFloat(peso21.replace(',', '.'));
+                        
+                        var elementoString = $("[data-columnaTB22='" + i + "'][data-filaTB22='" + j + "']");
+                        var idVariable = elementoString.data("idvariable");
+                        var idGdi = elementoString.data("idgdi");
+
+                        var variable = variables.find((o) => { return o["id"] === idVariable });
+                        var valor = variable.idValor;
+                        var variablesEnValor = variables.filter((o) => { return o["idValor"] == valor });
+                        var sumaEnValor = 0;
+                        variablesEnValor.forEach(function (e) {
+                            var valorElemento = $("[data-idgditb21='" + idGdi + "'][data-idvariabletb21='" + e.id + "']").children(".inputValor").val();
+                            sumaEnValor += parseFloat(valorElemento.replace(',', '.'));
+                        });
+
+                        var pesoValor = pesosValores.find((o) => { return o["idValor"] === variable.idValor && o["idGrupoInteres"] == idGdi });
+
+                        var resultado;
+                        if(sumaEnValor == 0){
+                            resultado = 0;
+                        }else{
+                            resultado = elemento*100/sumaEnValor;
+                        }
+
+                        elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                        console.log("test");
+                    }
+                }
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var peso22 = $("[data-columnaTB22='" + i + "'][data-filaTB22='" + j + "']").children(".inputValor").val();
+                        var elemento = parseFloat(peso22.replace(',', '.'));
+                        
+
+                        var elementoString = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']");
+                        var idVariable = elementoString.data("idvariable");
+                        var idGdi = elementoString.data("idgdi");
+
+                        var variable = variables.find((o) => { return o["id"] === idVariable });
+                        var valor = variable.idValor;
+
+                        var pesoValor = pesosValores.find((o) => { return o["idValor"] === valor && o["idGrupoInteres"] == idGdi });
+
+                        var resultado;
+
+                        resultado = pesoValor.tb23 * elemento/100;
+
+                        elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                        console.log("test");
+                    }
+                }
+                for (var i = 1; i <= numColumnas; i++) {
+                    var elementosColumna = $("[data-columnaTB23='" + i + "']");
+                    var suma = 0;
+                    elementosColumna.each(function (e) {
+                        var valorElemento = $(this).children(".inputValor").val();
+                        suma += parseFloat(valorElemento.replace(',', '.'));
+                    });
+                    $(".sumaTotalColumnaTB23" + i).html(suma.toFixed(4).replace(".",","));
+                }
+                for (var i = 1; i <= numFilas; i++) {
+                    var elementosFila = $("[data-filaTB23='" + i + "']");
+                    var suma = 0;
+                    elementosFila.each(function (e) {
+                        var valorElemento = $(this).children(".inputValor").val();
+                        suma += parseFloat(valorElemento.replace(',', '.'));
+                    });
+                    $(".sumaTotalFilaTB23" + i).html(suma.toFixed(4));
+                }
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var peso23 = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val();
+                        var elemento = parseFloat(peso23.replace(',', '.'));
+                        var sumaColumna = $(".sumaTotalColumnaTB23" + i).text();
+                        sumaColumna = $.trim(sumaColumna);
+                        var sumaColumnaValue = parseFloat(sumaColumna.replace(',','.'));
+                        var elementoString = $("[data-columnaTB3='" + i + "'][data-filaTB3='" + j + "']");
+                        var idVariable = elementoString.data("idvariable");
+                        var idGdi = elementoString.data("idgdi");
+                        
+                        var resultado;
+                        if(sumaColumnaValue == 0){
+                            resultado = 0;
+                        }else{
+                            resultado = elemento / sumaColumnaValue;
+                        }
+                        resultado = resultado *100;
+                        elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                        console.log("test");
+                    }
+                }
+
+                for (var i = 1; i <= numColumnas; i++) {
+                    for (var j = 1; j <= numFilas; j++) {
+                        var peso23 = $("[data-columnaTB23='" + i + "'][data-filaTB23='" + j + "']").children(".inputValor").val();
+                        var elemento = parseFloat(peso23.replace(',', '.'));
+                        var sumaFila = $(".sumaTotalFilaTB23" + j).text();
+                        sumaFila = $.trim(sumaFila);
+                        var sumaFilaValue = parseFloat(sumaFila.replace(',', '.'));
+                        var elementoString = $("[data-columnaTB4='" + i + "'][data-filaTB4='" + j + "']");
+                        var idVariable = elementoString.data("idvariable");
+                        var idGdi = elementoString.data("idgdi");
+                        
+                        var resultado;
+                        if (sumaFilaValue == 0) {
+                            resultado = 0;
+                        }else{
+                            resultado = elemento / sumaFilaValue;
+                        }
+                        resultado = resultado *100;
+                        elementoString.children(".inputValor").val(resultado.toFixed(4).replace(".", ","));
+                        console.log("test");
+                    }
+                }
+                for (var i = 1; i <= numFilas; i++) {
+                    var elementosFila = $("[data-filaTB4='" + i + "']");
+                    var suma = 0;
+                    elementosFila.each(function (e) {
+                        var valorElemento = $(this).children(".inputValor").val();
+                        suma += parseFloat(valorElemento.replace(',', '.'));
+                    });
+                    $(".sumaTotalFilaTB4" + i).html(suma.toFixed(4));
+                }
+               
+            }
+
+            function ObtenerPesosValores(){
+                var pesosValores;
+                $.ajax({
+                    url: '/Valores/ObtenerPesosValores?periodo=@periodo',
+                    method: 'get',
+                    async : false,
+                    success: function(data){
+                        pesosValores = data;
+                    },
+                    error: function(){
+                        alert("No se ha podio obtener los pesos de los valores");
+                    }
+
+                    
+                });
+                return pesosValores;
+            }
+            function ObtenerVariables(){
+                var variables;
+                $.ajax({
+                    url: '/Variables/ObtenerVariablesJson',
+                    async: false,
+                    method: 'get',
+                    success: function(data){
+                        variables = data;
+                    },
+                    error: function(){
+                        alert("No se ha podio obtener las variables");
+                    }
+                });
+                return variables;
+            }
+            function ObtenerGruposDeInteres() {
+                var gdi;
+                $.ajax({
+                    url: '/GruposDeInteres/ObtenerGruposDeInteresJson',
+                    async: false,
+                    method: 'get',
+                    success: function (data) {
+                        gdi = data;
+                    },
+                    error: function () {
+                        alert("No se ha podio obtener los grupos de interes");
+                    }
+                });
+                return gdi;
+            }
+
+            $("#RecalcularAPartirDePesosValores").on("click",function(){
+                RecalcularAPartirDePesosValores();
+            })
+        });
+    </script>
+
+ 
+}

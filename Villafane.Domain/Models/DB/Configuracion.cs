@@ -11,6 +11,7 @@ namespace Villafane.Domain.Models.DB
         public string? ColorBarra { get; set; }
         public string? ColorCabecerasTablas { get; set; }
         public string? ColorCabeceraTablasVertical { get; set; }
+        public bool CambiarModoCalculo { get; set; }
 
         public virtual LogotipoCliente? IdLogoNavigation { get; set; }
     }

@@ -15,7 +15,7 @@ namespace Villafane.Domain.ViewModels
         public string? ColorBarra { get; set; }
         public string? ColorCabeceraTabla { get; set; }
         public string? ColorCabeceraTablaVertical { get; set; }
-
+        public bool CambiarModoCalculo { get; set; }
         public IFormFile? Logo { get; set; }
     }
 }

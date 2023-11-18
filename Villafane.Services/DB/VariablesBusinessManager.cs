@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -56,10 +57,10 @@ namespace Villafane.Services.DB
         }
         public async Task<List<PesosVariablesTeorico>> ObtenerVariablesTeoricos(string? periodo)
         {
-            if(periodo == null)
+            if (periodo == null)
             {
                 var per = await _context.Periodos.OrderBy(x => x.Orden).FirstOrDefaultAsync();
-                if(per != null)
+                if (per != null)
                 {
                     var elementosPrimerPeriodo = await _context.PesosVariablesTeoricos.Where(x => x.Periodo == per.PeriodoDeEjecucion).ToListAsync();
                     return elementosPrimerPeriodo;
@@ -71,7 +72,7 @@ namespace Villafane.Services.DB
                     return elementos;
                 }
             }
-            var elementosFinales = await _context.PesosVariablesTeoricos.Where(x=>x.Periodo == periodo).ToListAsync();
+            var elementosFinales = await _context.PesosVariablesTeoricos.Where(x => x.Periodo == periodo).ToListAsync();
 
             return elementosFinales;
         }
@@ -82,7 +83,7 @@ namespace Villafane.Services.DB
 
             return elementos;
         }
-        public async Task GuardarVariablesTeoricos(List<PesosVariablesTeorico> pesos,string periodo)
+        public async Task GuardarVariablesTeoricos(List<PesosVariablesTeorico> pesos, string periodo)
         {
             if (pesos != null && pesos.Count() > 0)
             {
@@ -120,13 +121,13 @@ namespace Villafane.Services.DB
         public async Task CalcularYGuardarIR(string periodo)
         {
             var pesosVariables = await ObtenerVariablesTeoricos(periodo);
-            var pesosValores = await _context.PesosValoresTeoricos.Include(x => x.IdGrupoInteresNavigation).Include(x => x.IdValorNavigation).Where(x=>x.Periodo == periodo).ToListAsync();
+            var pesosValores = await _context.PesosValoresTeoricos.Include(x => x.IdGrupoInteresNavigation).Include(x => x.IdValorNavigation).Where(x => x.Periodo == periodo).ToListAsync();
             var indicadores = await _context.Indicadores
                .Include(x => x.IdVariableNavigation)
                .ThenInclude(x => x.IdValorNavigation)
                .Include(x => x.IdGrupoInteresNavigation)
                .Include(x => x.IdEscalaNavigation)
-               .Where(x=>x.Periodo == periodo)
+               .Where(x => x.Periodo == periodo)
                .ToListAsync();
 
             foreach (var indicador in indicadores)
@@ -169,7 +170,7 @@ namespace Villafane.Services.DB
                     indicador.PesoIndicadorEnValorNormalizado = indicador.PesoIndicadorEnValor * indicador.DatoNormalizado;
 
 
-                    if(pesoValor.Tb4 != null)
+                    if (pesoValor.Tb4 != null)
                     {
                         indicador.PesoDelGdienValor = pesoValor.Tb4;
                     }
@@ -184,10 +185,10 @@ namespace Villafane.Services.DB
                 indicador.NotaDelValor = indicadoresValoresSuma;
             }
 
-                
 
 
-           
+
+
 
 
             var gdis = await _context.GruposDeInteres.ToListAsync();
@@ -197,14 +198,14 @@ namespace Villafane.Services.DB
                 var sumaPesos = pesosValoresGdi.Select(x => x.Tb23).Sum();
                 gdi.PesoEnIr = sumaPesos;
                 _context.Update(gdi);
-                await _context.SaveChangesAsync();  
+                await _context.SaveChangesAsync();
             }
 
             foreach (var indicador in indicadores)
             {
                 var gdi = gdis.First(x => x.Id == indicador.IdGrupoInteres);
                 indicador.PesoIndicadorEnGdi = gdi.PesoEnIr * indicador.PesoIndicadorEnIr;
-                indicador.PesoIndicadorEnGdinormalizado = (indicador.PesoIndicadorEnGdi * indicador.DatoNormalizado)/100;
+                indicador.PesoIndicadorEnGdinormalizado = (indicador.PesoIndicadorEnGdi * indicador.DatoNormalizado) / 100;
             }
 
 
@@ -238,7 +239,7 @@ namespace Villafane.Services.DB
         }
         public async Task CalcularDisponibilidad(string periodo)
         {
-            var pesos = await _context.PesosVariablesTeoricos.Include(x => x.IdVariableNavigation).ThenInclude(x => x.Indicadores).Where(x=>x.Periodo == periodo).ToListAsync();
+            var pesos = await _context.PesosVariablesTeoricos.Include(x => x.IdVariableNavigation).ThenInclude(x => x.Indicadores).Where(x => x.Periodo == periodo).ToListAsync();
 
             foreach (var peso in pesos)
             {
@@ -264,6 +265,74 @@ namespace Villafane.Services.DB
             }
         }
 
+        public async Task<bool> CrearPesosBase(string periodo)
+        {
+            var pesos = await _context.PesosVariablesTeoricos.Where(x => x.Periodo == periodo).ToListAsync();
+            if (pesos.Count == 0)
+            {
+                var gdis = await _context.GruposDeInteres.ToListAsync();
+                var variables = await _context.Variables.ToListAsync();
+                foreach (var gdi in gdis)
+                {
+                    foreach (var variable in variables)
+                    {
+                        PesosVariablesTeorico pesoDB = new PesosVariablesTeorico();
+                        pesoDB.IdVariable = variable.Id;
+                        pesoDB.IdGrupoInteres = gdi.Id;
+                        pesoDB.ValorTeorico = 0;
+                        pesoDB.Tb12 = 0;
+                        pesoDB.Tb21 = 0;
+                        pesoDB.Tb22 = 0;
+                        pesoDB.Tb23 = 0;
+                        pesoDB.Tb3 = 0;
+                        pesoDB.Tb4 = 0;
+                        pesoDB.Periodo = periodo;
+                        _context.Add(pesoDB);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+            }
+            return true;
+        }
+
+        public async Task<VariablesDisponiblesEnValor[,]> ObtenerSumaAtributos(string periodo)
+        {
+            await CrearPesosBase(periodo);
+            await CalcularDisponibilidad(periodo);
+            var gdis = await _context.GruposDeInteres.ToListAsync();
+            var valores = await _context.Valores.Include(x => x.Variables).ToListAsync();
+            VariablesDisponiblesEnValor[,] resultado = new VariablesDisponiblesEnValor[valores.Count(), gdis.Count()];
+            int i = 0;
+            int j = 0;
+            foreach (var valor in valores)
+            {
+                i = 0;
+                foreach (var gdi in gdis)
+                {
+                
+                    var variables = await _context.Variables.Where(x => x.IdValor == valor.Id).ToListAsync();
+                    var numvariables = variables.Count();
+                    var numdisponible = 0;
+                    foreach (var variable in variables)
+                    {
+                        bool vardisponible = await _context.PesosVariablesTeoricos.Where(x => x.IdVariable == variable.Id && x.IdGrupoInteres == gdi.Id && x.Periodo == periodo).Select(x => x.InformacionDisponible).FirstOrDefaultAsync();
+                        if (vardisponible == true)
+                        {
+                            numdisponible++;
+                        }
+                    }
+                    VariablesDisponiblesEnValor v = new VariablesDisponiblesEnValor();
+                    v.numvariables = numvariables;
+                    v.numvariablesdisponibles = numdisponible;
+                    resultado[j, i] = v;
+                    i++;
+                }
+                j++;
+            }
+            return resultado;
+        }
+
         public bool CargarPesosTeoricosDeExcel(Stream archivo)
         {
             using (XLWorkbook workBook = new XLWorkbook(archivo))
@@ -274,7 +343,7 @@ namespace Villafane.Services.DB
 
 
                 //Create a new DataTable.
-                DataTable dt = new DataTable();
+                System.Data.DataTable dt = new System.Data.DataTable();
 
                 bool firstRow = true;
                 foreach (IXLRow row in workSheet.Rows())
@@ -356,7 +425,7 @@ namespace Villafane.Services.DB
             List<DescargarExcelPesosVariablesViewModel> modelo = new List<DescargarExcelPesosVariablesViewModel>();
             foreach (var gdi in gdis)
             {
-                foreach(var variable in variables)
+                foreach (var variable in variables)
                 {
                     modelo.Add(new DescargarExcelPesosVariablesViewModel
                     {
